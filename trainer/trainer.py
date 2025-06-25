@@ -417,7 +417,7 @@ class PatchTrainer():
                   samplecnt, 1000,
                   #self.optimizer.param_groups[0]['lr'],
                   self.epsilon,
-                  loss.item(),
+                  (loss1.item()+loss2.item()+loss3.item()+loss4.item()),
                   mIoU,
                   str(datetime.timedelta(seconds=int(time.time() - start_time))),
                   eta_string))
@@ -428,14 +428,14 @@ class PatchTrainer():
       self.logger.info('-------------------------------------------------------------------------------------------------')
       self.logger.info("Epochs: {:d}/{:d}, Average loss: {:.3f}, Average mIoU: {:.3f}, Average pixAcc: {:.3f}".format(
         self.current_epoch, self.epochs, average_loss, average_mIoU, average_pixAcc))
-      safety = self.adv_patch1.clone()
-      pickle.dump( safety.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap1"+".p", "wb" ) )
-      safety = self.adv_patch2.clone()
-      pickle.dump( safety.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap2"+".p", "wb" ) )
-      safety = self.adv_patch3.clone()
-      pickle.dump( safety.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap3"+".p", "wb" ) )
-      safety = self.adv_patch4.clone()
-      pickle.dump( safety.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap4"+".p", "wb" ) )
+      safety1 = self.adv_patch1.clone()
+      pickle.dump( safety1.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap1"+".p", "wb" ) )
+      safety2 = self.adv_patch2.clone()
+      pickle.dump( safety2.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap2"+".p", "wb" ) )
+      safety3 = self.adv_patch3.clone()
+      pickle.dump( safety3.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap3"+".p", "wb" ) )
+      safety4 = self.adv_patch4.clone()
+      pickle.dump( safety4.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap4"+".p", "wb" ) )
       
       #self.test() ## Doing 1 iteration of testing
       self.logger.info('-------------------------------------------------------------------------------------------------')

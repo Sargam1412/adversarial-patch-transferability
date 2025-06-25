@@ -120,8 +120,14 @@ class PatchTrainer():
 
       # Register hook
       if 'pidnet_s' in self.model_name:
-        self.layer_name = 'layer3.2.bn2'  # Change this to the correct intermediate layer
-        self.feature_map_shape = [128,64,64]
+        self.layer1_name = 'layer3.2.bn2' 
+        self.feature_map1_shape = [128,64,64]
+        self.layer2_name = 'layer3.2.bn2' 
+        self.feature_map2_shape = [128,64,64]
+        self.layer3_name = 'layer3.2.bn2' 
+        self.feature_map3_shape = [128,64,64]
+        self.layer4_name = 'layer3.2.bn2' 
+        self.feature_map4_shape = [128,64,64]
       elif 'pidnet_m' in self.model_name:
         self.layer_name = 'layer3.2.bn2'
         self.feature_map_shape = [256,64,64]
@@ -132,12 +138,27 @@ class PatchTrainer():
         self.layer_name = 'pretrained.layer2.3.relu'
         self.feature_map_shape=[512,32,32]
 
-      self.feature_maps_adv = None
+      self.feature_maps_adv1 = None
+      self.feature_maps_adv2 = None
+      self.feature_maps_adv3 = None
+      self.feature_maps_adv4 = None
       self.feature_maps_rand = None
     
   # Hook to store feature map
   def hook1(self, module, input, output):
-      self.feature_maps_adv = output
+      self.feature_maps_adv1 = output
+      output.retain_grad()
+
+  def hook12(self, module, input, output):
+      self.feature_maps_adv2 = output
+      output.retain_grad()
+
+  def hook13(self, module, input, output):
+      self.feature_maps_adv3 = output
+      output.retain_grad()
+
+  def hook14(self, module, input, output):
+      self.feature_maps_adv4 = output
       output.retain_grad()
 
   def hook2(self, module, input, output):
@@ -146,9 +167,14 @@ class PatchTrainer():
 
   def register_forward_hook1(self):
     for name, module in self.model1.model.named_modules():
-        if name == self.layer_name:
+        if name == self.layer1_name:
           module.register_forward_hook(self.hook1)
-          break
+        if name == self.layer2_name:
+          module.register_forward_hook(self.hook12)
+        if name == self.layer3_name:
+          module.register_forward_hook(self.hook13)
+        if name == self.layer4_name:
+          module.register_forward_hook(self.hook14)
 
   def register_forward_hook2(self):
     for name, module in self.model2.model.named_modules():
@@ -158,10 +184,14 @@ class PatchTrainer():
   
   def get_agg_gradient(self):
     self.feature_maps = None
-    H = torch.zeros((2975, self.feature_map_shape[0], self.feature_map_shape[1], self.feature_map_shape[2]), device=self.device)  # Aggregate gradient
+    H1 = torch.zeros((1000, self.feature_map1_shape[0], self.feature_map1_shape[1], self.feature_map1_shape[2]), device=self.device)  # Aggregate gradient
+    H2 = torch.zeros((1000, self.feature_map2_shape[0], self.feature_map2_shape[1], self.feature_map2_shape[2]), device=self.device)
+    H3 = torch.zeros((1000, self.feature_map3_shape[0], self.feature_map3_shape[1], self.feature_map3_shape[2]), device=self.device)
+    H4 = torch.zeros((1000, self.feature_map4_shape[0], self.feature_map4_shape[1], self.feature_map4_shape[2]), device=self.device)
     for epoch in range(30):
       self.logger.info(f"\nStarting gradient epoch {epoch+1}/30...")
       for i_iter, batch in enumerate(self.train_dataloader, 0):
+        if i_iter<1000:
           image, true_label,_, _, _, idx = batch
           image, true_label = image.to(self.device), true_label.to(self.device)
   
@@ -182,24 +212,42 @@ class PatchTrainer():
           with torch.no_grad():
               self.adv_patch += self.epsilon * self.adv_patch.grad.data.sign()
               self.adv_patch.clamp_(0, 1)  # Keep pixel values in valid range
-          grad_feature_map = self.feature_maps_adv.grad  # Only works if feature_maps.requires_grad=True
-  
+          grad_feature_map1 = self.feature_maps_adv1.grad  # Only works if feature_maps.requires_grad=True
+          grad_feature_map2 = self.feature_maps_adv2.grad
+          grad_feature_map3 = self.feature_maps_adv3.grad
+          grad_feature_map4 = self.feature_maps_adv4.grad
+          
           # If not requires_grad, use autograd.grad instead
-          if grad_feature_map is None:
-              print("grad_feature_map is None")
-              grad_feature_map = torch.autograd.grad(loss, self.feature_maps_adv, retain_graph=True)[0]
+          if grad_feature_map1 is None:
+              print("grad_feature_map1 is None")
+              grad_feature_map1 = torch.autograd.grad(loss, self.feature_maps_adv1, retain_graph=True)[0]
+
+          if grad_feature_map2 is None:
+              print("grad_feature_map2 is None")
+              grad_feature_map2 = torch.autograd.grad(loss, self.feature_maps_adv2, retain_graph=True)[0]
+
+          if grad_feature_map3 is None:
+              print("grad_feature_map3 is None")
+              grad_feature_map3 = torch.autograd.grad(loss, self.feature_maps_adv3, retain_graph=True)[0]
+
+          if grad_feature_map4 is None:
+              print("grad_feature_map4 is None")
+              grad_feature_map4 = torch.autograd.grad(loss, self.feature_maps_adv4, retain_graph=True)[0]
   
           # 5. Normalize and aggregate
           # grad_feature_map /= torch.norm(grad_feature_map, p=2, dim=(1,2,3), keepdim=True) + 1e-8
           for i in range(image.shape[0]):
-            H[idx[i]] = grad_feature_map[i] if H[idx[i]] is None else H[idx[i]] + grad_feature_map[i].detach()
-          self.logger.info(f" Sample number: {i_iter+1}/2975")
+            H1[idx[i]] = grad_feature_map1[i] if H1[idx[i]] is None else H1[idx[i]] + grad_feature_map1[i].detach()
+            H2[idx[i]] = grad_feature_map2[i] if H2[idx[i]] is None else H2[idx[i]] + grad_feature_map2[i].detach()
+            H3[idx[i]] = grad_feature_map3[i] if H3[idx[i]] is None else H3[idx[i]] + grad_feature_map3[i].detach()
+            H4[idx[i]] = grad_feature_map4[i] if H4[idx[i]] is None else H4[idx[i]] + grad_feature_map4[i].detach()
+          self.logger.info(f" Sample number: {i_iter+1}/1000")
           # Optional: delete big tensors
-          del patched_image, output, grad_feature_map
+          del patched_image, output, grad_feature_map1, grad_feature_map2, grad_feature_map3, grad_feature_map4
           torch.cuda.empty_cache()
   
       
-    return H
+    return H1, H2, H3, H4
 
   def train(self, H):
     epochs, iters_per_epoch, max_iters = self.epochs, self.iters_per_epoch, self.max_iters

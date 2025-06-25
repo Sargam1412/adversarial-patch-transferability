@@ -64,7 +64,7 @@ class PatchTrainer():
       
       self.train_dataloader = torch.utils.data.DataLoader(dataset=cityscape_train,
                                               batch_size=self.batch_train,
-                                              shuffle=config.train.shuffle,
+                                              shuffle=False,
                                               num_workers=config.train.num_workers,
                                               pin_memory=config.train.pin_memory,
                                               drop_last=config.train.drop_last)

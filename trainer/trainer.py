@@ -375,10 +375,10 @@ class PatchTrainer():
             self.adv_patch3.grad.zero_()
           if self.adv_patch4.grad is not None:
             self.adv_patch4.grad.zero_()
-          loss1.backward()
-          loss2.backward()
-          loss3.backward()
-          loss4.backward()
+          # loss1.backward()
+          # loss2.backward()
+          # loss3.backward()
+          # loss4.backward()
           grad1 = torch.autograd.grad(loss1, self.adv_patch1, retain_graph=True)[0]
           grad2 = torch.autograd.grad(loss2, self.adv_patch2, retain_graph=True)[0]
           grad3 = torch.autograd.grad(loss3, self.adv_patch3, retain_graph=True)[0]

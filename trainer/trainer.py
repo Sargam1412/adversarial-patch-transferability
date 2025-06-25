@@ -319,6 +319,7 @@ class PatchTrainer():
       momentum3 = torch.tensor(0, dtype=torch.float32).to(self.device)
       momentum4 = torch.tensor(0, dtype=torch.float32).to(self.device)
       for i_iter, batch in enumerate(self.train_dataloader, 0):
+        if i_iter<1000:
           self.current_iteration += 1
           samplecnt += batch[0].shape[0]
           image, true_label,_, _, _, idx = batch

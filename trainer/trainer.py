@@ -91,10 +91,28 @@ class PatchTrainer():
       self.criterion = PatchLoss(self.config)
       ## optimizer
       # Initialize adversarial patch (random noise)
-      self.adv_patch = torch.rand((3, self.patch_size, self.patch_size), 
+      self.adv_patch1 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
-      self.rand_patch = torch.rand((3, self.patch_size, self.patch_size), 
+      self.rand_patch1 = torch.rand((3, 100, 100), 
+                              requires_grad=True, 
+                              device=self.device)
+      self.adv_patch2 = torch.rand((3, 100, 100), 
+                              requires_grad=True, 
+                              device=self.device)
+      self.rand_patch2 = torch.rand((3, 100, 100), 
+                              requires_grad=True, 
+                              device=self.device)
+      self.adv_patch3 = torch.rand((3, 100, 100), 
+                              requires_grad=True, 
+                              device=self.device)
+      self.rand_patch3 = torch.rand((3, 100, 100), 
+                              requires_grad=True, 
+                              device=self.device)
+      self.adv_patch4 = torch.rand((3, 100, 100), 
+                              requires_grad=True, 
+                              device=self.device)
+      self.rand_patch4 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
       
@@ -142,7 +160,10 @@ class PatchTrainer():
       self.feature_maps_adv2 = None
       self.feature_maps_adv3 = None
       self.feature_maps_adv4 = None
-      self.feature_maps_rand = None
+      self.feature_maps_rand1 = None
+      self.feature_maps_rand2 = None
+      self.feature_maps_rand3 = None
+      self.feature_maps_rand4 = None
     
   # Hook to store feature map
   def hook1(self, module, input, output):
@@ -162,7 +183,19 @@ class PatchTrainer():
       output.retain_grad()
 
   def hook2(self, module, input, output):
-      self.feature_maps_rand = output
+      self.feature_maps_rand1 = output
+      output.retain_grad()
+
+  def hook22(self, module, input, output):
+      self.feature_maps_rand2 = output
+      output.retain_grad()
+
+  def hook23(self, module, input, output):
+      self.feature_maps_rand3 = output
+      output.retain_grad()
+
+  def hook24(self, module, input, output):
+      self.feature_maps_rand4 = output
       output.retain_grad()
 
   def register_forward_hook1(self):
@@ -178,9 +211,15 @@ class PatchTrainer():
 
   def register_forward_hook2(self):
     for name, module in self.model2.model.named_modules():
-        if name == self.layer_name:
+        if name == self.layer1_name:
           module.register_forward_hook(self.hook2)
-          break
+        if name == self.layer2_name:
+          module.register_forward_hook(self.hook22)
+        if name == self.layer3_name:
+          module.register_forward_hook(self.hook23)
+        if name == self.layer4_name:
+          module.register_forward_hook(self.hook24)
+          
   
   def get_agg_gradient(self):
     self.feature_maps = None
@@ -249,12 +288,24 @@ class PatchTrainer():
       
     return H1, H2, H3, H4
 
-  def train(self, H):
+  def train(self, H1, H2, H3, H4):
     epochs, iters_per_epoch, max_iters = self.epochs, self.iters_per_epoch, self.max_iters
-    self.feature_maps_adv = None
-    self.feature_maps_rand = None
-    H /= torch.norm(H, p=2, dim=(2,3), keepdim=True) + 1e-8 
-    self.logger.info(f'H.shape: {H.shape}')
+    self.feature_maps_adv1 = None
+    self.feature_maps_rand1 = None
+    self.feature_maps_adv2 = None
+    self.feature_maps_rand2 = None
+    self.feature_maps_adv3 = None
+    self.feature_maps_rand3 = None
+    self.feature_maps_adv4 = None
+    self.feature_maps_rand4 = None
+    H1 /= torch.norm(H1, p=2, dim=(2,3), keepdim=True) + 1e-8 
+    H2 /= torch.norm(H2, p=2, dim=(2,3), keepdim=True) + 1e-8
+    H3 /= torch.norm(H3, p=2, dim=(2,3), keepdim=True) + 1e-8
+    H4 /= torch.norm(H4, p=2, dim=(2,3), keepdim=True) + 1e-8
+    self.logger.info(f'H1.shape: {H1.shape}')
+    self.logger.info(f'H2.shape: {H2.shape}')
+    self.logger.info(f'H3.shape: {H3.shape}')
+    self.logger.info(f'H4.shape: {H4.shape}')
     start_time = time.time()
     self.logger.info('Start training, Total Epochs: {:d} = Iterations per epoch {:d}'.format(epochs, iters_per_epoch))
     IoU = []
@@ -263,7 +314,10 @@ class PatchTrainer():
       self.metric.reset()
       total_loss = 0
       samplecnt = 0
-      momentum = torch.tensor(0, dtype=torch.float32).to(self.device)
+      momentum1 = torch.tensor(0, dtype=torch.float32).to(self.device)
+      momentum2 = torch.tensor(0, dtype=torch.float32).to(self.device)
+      momentum3 = torch.tensor(0, dtype=torch.float32).to(self.device)
+      momentum4 = torch.tensor(0, dtype=torch.float32).to(self.device)
       for i_iter, batch in enumerate(self.train_dataloader, 0):
           self.current_iteration += 1
           samplecnt += batch[0].shape[0]
@@ -274,8 +328,8 @@ class PatchTrainer():
               
           
           # Randomly place patch in image and label(put ignore index)
-          patched_image_adv, patched_label_adv = self.apply_patch(image,true_label,self.adv_patch)
-          patched_image_rand, patched_label_rand = self.apply_patch(image,true_label,self.rand_patch)
+          patched_image_adv, patched_label_adv = self.apply_patch(image,true_label,self.adv_patch1,self.adv_patch2,self.adv_patch3,self.adv_patch4)
+          patched_image_rand, patched_label_rand = self.apply_patch(image,true_label,self.rand_patch1,self.rand_patch2,self.rand_patch3,self.rand_patch4)
           # fig = plt.figure()
           # ax = fig.add_subplot(1,2,1)
           # ax.imshow(patched_image[0].permute(1,2,0).cpu().detach().numpy())
@@ -288,15 +342,21 @@ class PatchTrainer():
           output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
           #F = torch.zeros(( self.feature_map_shape[1], self.feature_map_shape[2]), device=self.device)
           for i in range(image.shape[0]):
-            F = ((self.feature_maps_rand[i]-self.feature_maps_adv[i])*H[idx[i]]) + (H[idx[i]])**2
+            F1 = ((self.feature_maps_adv1[i]-self.feature_maps_rand1[i])*H1[idx[i]]) + (H1[idx[i]])**2
+            F2 = ((self.feature_maps_adv2[i]-self.feature_maps_rand2[i])*H2[idx[i]]) + (H2[idx[i]])**2
+            F3 = ((self.feature_maps_adv3[i]-self.feature_maps_rand3[i])*H3[idx[i]]) + (H3[idx[i]])**2
+            F4 = ((self.feature_maps_adv4[i]-self.feature_maps_rand4[i])*H4[idx[i]]) + (H4[idx[i]])**2
           #plt.imshow(output.argmax(dim =1)[0].cpu().detach().numpy())
           #plt.show()
           #break
 
           # Compute adaptive loss
-          loss = self.criterion.compute_trainloss(F)
+          loss1 = self.criterion.compute_trainloss(F1)
+          loss2 = self.criterion.compute_trainloss(F2)
+          loss3 = self.criterion.compute_trainloss(F3)
+          loss4 = self.criterion.compute_trainloss(F4)
           #loss = self.criterion.compute_loss_direct(output, patched_label)
-          total_loss += loss.item()
+          total_loss += (loss1.item() + loss2.item() + loss3.item() + loss4.item())
           #break
 
           ## metrics
@@ -306,27 +366,54 @@ class PatchTrainer():
           # Backpropagation
           self.model1.model.zero_grad()
           self.model2.model.zero_grad()
-          if self.adv_patch.grad is not None:
-            self.adv_patch.grad.zero_()
-          loss.backward()
+          if self.adv_patch1.grad is not None:
+            self.adv_patch1.grad.zero_()
+          if self.adv_patch2.grad is not None:
+            self.adv_patch2.grad.zero_()
+          if self.adv_patch3.grad is not None:
+            self.adv_patch3.grad.zero_()
+          if self.adv_patch4.grad is not None:
+            self.adv_patch4.grad.zero_()
+          loss1.backward()
+          loss2.backward()
+          loss3.backward()
+          loss4.backward()
+          grad1 = torch.autograd.grad(loss1, self.adv_patch1, retain_graph=True)[0]
+          grad2 = torch.autograd.grad(loss2, self.adv_patch2, retain_graph=True)[0]
+          grad3 = torch.autograd.grad(loss3, self.adv_patch3, retain_graph=True)[0]
+          grad4 = torch.autograd.grad(loss4, self.adv_patch4, retain_graph=True)[0]
           with torch.no_grad():
               #self.patch += self.epsilon * self.patch.grad.sign()  # Update patch using FGSM-style ascent
-              grad = self.adv_patch.grad
-              norm_grad = grad/ (torch.norm(grad) + 1e-8)
-              momentum = (0.9*momentum) + norm_grad
-              self.adv_patch += self.epsilon * momentum.sign()
+              norm_grad1 = grad1/ (torch.norm(grad1) + 1e-8)
+              momentum1 = (0.9*momentum1) + norm_grad1
+              self.adv_patch1 += self.epsilon * momentum1.sign()
               #self.patch += self.epsilon * self.patch.grad.data.sign()
-              self.adv_patch.clamp_(0, 1)  # Keep pixel values in valid range
+              self.adv_patch1.clamp_(0, 1)  # Keep pixel values in valid range
+              norm_grad2 = grad2/ (torch.norm(grad2) + 1e-8)
+              momentum2 = (0.9*momentum2) + norm_grad2
+              self.adv_patch2 += self.epsilon * momentum2.sign()
+              #self.patch += self.epsilon * self.patch.grad.data.sign()
+              self.adv_patch2.clamp_(0, 1)  # Keep pixel values in valid range
+              norm_grad3 = grad3/ (torch.norm(grad3) + 1e-8)
+              momentum3 = (0.9*momentum3) + norm_grad3
+              self.adv_patch3 += self.epsilon * momentum3.sign()
+              #self.patch += self.epsilon * self.patch.grad.data.sign()
+              self.adv_patch3.clamp_(0, 1)  # Keep pixel values in valid range
+              norm_grad4 = grad4/ (torch.norm(grad4) + 1e-8)
+              momentum4 = (0.9*momentum4) + norm_grad4
+              self.adv_patch4 += self.epsilon * momentum4.sign()
+              #self.patch += self.epsilon * self.patch.grad.data.sign()
+              self.adv_patch4.clamp_(0, 1)  # Keep pixel values in valid range
 
           ## ETA
-          eta_seconds = ((time.time() - start_time) / self.current_iteration) * (iters_per_epoch*epochs - self.current_iteration)
+          eta_seconds = ((time.time() - start_time) / self.current_iteration) * (1000*epochs - self.current_iteration)
           eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
 
           if i_iter % self.log_per_iters == 0:
             self.logger.info(
               "Epochs: {:d}/{:d} || Samples: {:d}/{:d} || Lr: {:.6f} || Loss: {:.4f} || mIoU: {:.4f} || Cost Time: {} || Estimated Time: {}".format(
                   self.current_epoch, self.end_epoch,
-                  samplecnt, self.batch_train*iters_per_epoch,
+                  samplecnt, 1000,
                   #self.optimizer.param_groups[0]['lr'],
                   self.epsilon,
                   loss.item(),
@@ -336,12 +423,18 @@ class PatchTrainer():
           
 
       average_pixAcc, average_mIoU = self.metric.get()
-      average_loss = total_loss/len(self.train_dataloader)
+      average_loss = total_loss/1000
       self.logger.info('-------------------------------------------------------------------------------------------------')
       self.logger.info("Epochs: {:d}/{:d}, Average loss: {:.3f}, Average mIoU: {:.3f}, Average pixAcc: {:.3f}".format(
         self.current_epoch, self.epochs, average_loss, average_mIoU, average_pixAcc))
-      safety = self.adv_patch.detach().cpu().clone()
-      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss"+".p", "wb" ) )
+      safety = self.adv_patch1.clone()
+      pickle.dump( safety.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap1"+".p", "wb" ) )
+      safety = self.adv_patch2.clone()
+      pickle.dump( safety.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap2"+".p", "wb" ) )
+      safety = self.adv_patch3.clone()
+      pickle.dump( safety.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap3"+".p", "wb" ) )
+      safety = self.adv_patch4.clone()
+      pickle.dump( safety.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap4"+".p", "wb" ) )
       
       #self.test() ## Doing 1 iteration of testing
       self.logger.info('-------------------------------------------------------------------------------------------------')
@@ -351,6 +444,6 @@ class PatchTrainer():
 
       IoU.append(self.metric.get(full=True))
 
-    return self.adv_patch.detach(),np.array(IoU)  # Return adversarial patch and IoUs over epochs
+    return self.adv_patch1.detach(),self.adv_patch2.detach(),self.adv_patch3.detach(),self.adv_patch4.detach(),np.array(IoU)  # Return adversarial patch and IoUs over epochs
 
     

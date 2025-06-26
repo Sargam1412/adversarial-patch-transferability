@@ -21,10 +21,10 @@ import matplotlib.pyplot as plt
 import pickle
 
 class PatchTrainer():
-  def __init__(self,config,main_logger,model_name):
+  def __init__(self,config,main_logger,model_name,patch1,patch2,patch3,patch4):
       self.config = config
-      self.start_epoch = config.train.start_epoch
-      self.end_epoch = config.train.end_epoch
+      self.start_epoch = 17
+      self.end_epoch = 30
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
       self.batch_test = config.test.batch_size
@@ -91,27 +91,23 @@ class PatchTrainer():
       self.criterion = PatchLoss(self.config)
       ## optimizer
       # Initialize adversarial patch (random noise)
-      self.adv_patch1 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
+      self.adv_patch1 = patch1.clone().detach().to(self.device)
+      self.adv_patch1.requires_grad = True
       self.rand_patch1 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
-      self.adv_patch2 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
+      self.adv_patch2 = patch2.clone().detach().to(self.device)
+      self.adv_patch2.requires_grad = True
       self.rand_patch2 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
-      self.adv_patch3 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
+      self.adv_patch3 = patch3.clone().detach().to(self.device)
+      self.adv_patch3.requires_grad = True
       self.rand_patch3 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
-      self.adv_patch4 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
+      self.adv_patch4 = patch4.clone().detach().to(self.device)
+      self.adv_patch4.requires_grad = True
       self.rand_patch4 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)

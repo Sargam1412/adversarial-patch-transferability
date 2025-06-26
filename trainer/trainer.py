@@ -91,25 +91,25 @@ class PatchTrainer():
       self.criterion = PatchLoss(self.config)
       ## optimizer
       # Initialize adversarial patch (random noise)
-      self.adv_patch1 = torch.rand((3, 200, 200), 
+      self.adv_patch1 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
-      self.rand_patch1 = torch.rand((3, 200, 200), 
+      self.rand_patch1 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
-      self.adv_patch2 = torch.rand((3, 200, 200), 
+      self.adv_patch2 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
       self.rand_patch2 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
-      self.adv_patch3 = torch.rand((3, 200, 200), 
+      self.adv_patch3 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
       self.rand_patch3 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
-      self.adv_patch4 = torch.rand((3, 200, 200), 
+      self.adv_patch4 = torch.rand((3, 100, 100), 
                               requires_grad=True, 
                               device=self.device)
       self.rand_patch4 = torch.rand((3, 100, 100), 

@@ -13,7 +13,7 @@ class Patch:
         ])
 
 
-    def apply_patch(self, image, label, patch):#, patch2, patch3, patch4
+    def apply_patch(self, image, label, patch1, patch2, patch3, patch4):#
         """
         Overlay the adversarial patch on the image at a given position.
         """
@@ -42,14 +42,14 @@ class Patch:
 
         # Apply transformation to patch (EOT)
         #transformed_patch = self.eot_transforms(patch)
-        transformed_patch = patch
+        #transformed_patch = patch
 
         # Overlay patch onto the image and accordingly edit the label
-        # patched_image[:,:, y:y_mid, x:x_mid] = patch1
-        # patched_image[:,:, y:y_mid, x_mid:x_end] = patch2
-        # patched_image[:,:, y_mid:y_end, x:x_mid] = patch3
-        # patched_image[:,:, y_mid:y_end, x_mid:x_end] = patch4
-        patched_image[:,:, y:y_end, x:x_end] = transformed_patch
+        patched_image[:,:, y:y_mid, x:x_mid] = patch1
+        patched_image[:,:, y:y_mid, x_mid:x_end] = patch2
+        patched_image[:,:, y_mid:y_end, x:x_mid] = patch3
+        patched_image[:,:, y_mid:y_end, x_mid:x_end] = patch4
+        #patched_image[:,:, y:y_end, x:x_end] = transformed_patch
         patched_label[:, y:y_end, x:x_end] = self.config.train.ignore_label
         #print(patched_label[:, y:y_end, x:x_end])
         return patched_image, patched_label

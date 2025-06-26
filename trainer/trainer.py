@@ -97,21 +97,21 @@ class PatchTrainer():
       self.rand_patch = torch.rand((3, 200, 200), 
                               requires_grad=True, 
                               device=self.device)
-      self.adv_patch2 = patch2.clone().detach().to(self.device)
-      self.adv_patch2.requires_grad = True
-      self.rand_patch2 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
-      self.adv_patch3 = patch3.clone().detach().to(self.device)
-      self.adv_patch3.requires_grad = True
-      self.rand_patch3 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
-      self.adv_patch4 = patch4.clone().detach().to(self.device)
-      self.adv_patch4.requires_grad = True
-      self.rand_patch4 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
+      # self.adv_patch2 = patch2.clone().detach().to(self.device)
+      # self.adv_patch2.requires_grad = True
+      # self.rand_patch2 = torch.rand((3, 100, 100), 
+      #                         requires_grad=True, 
+      #                         device=self.device)
+      # self.adv_patch3 = patch3.clone().detach().to(self.device)
+      # self.adv_patch3.requires_grad = True
+      # self.rand_patch3 = torch.rand((3, 100, 100), 
+      #                         requires_grad=True, 
+      #                         device=self.device)
+      # self.adv_patch4 = patch4.clone().detach().to(self.device)
+      # self.adv_patch4.requires_grad = True
+      # self.rand_patch4 = torch.rand((3, 100, 100), 
+      #                         requires_grad=True, 
+      #                         device=self.device)
       
       # # Define optimizer
       # self.optimizer = torch.optim.SGD(params = [self.patch],

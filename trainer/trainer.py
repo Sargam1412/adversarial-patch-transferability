@@ -21,9 +21,9 @@ import matplotlib.pyplot as plt
 import pickle
 
 class PatchTrainer():
-  def __init__(self,config,main_logger,model_name,patch1,patch2,patch3,patch4):
+  def __init__(self,config,main_logger,model_name):
       self.config = config
-      self.start_epoch = 17
+      self.start_epoch = 0
       self.end_epoch = 30
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
@@ -91,9 +91,10 @@ class PatchTrainer():
       self.criterion = PatchLoss(self.config)
       ## optimizer
       # Initialize adversarial patch (random noise)
-      self.adv_patch1 = patch1.clone().detach().to(self.device)
-      self.adv_patch1.requires_grad = True
-      self.rand_patch1 = torch.rand((3, 100, 100), 
+      self.adv_patch = torch.rand((3, 200, 200), 
+                              requires_grad=True, 
+                              device=self.device)
+      self.rand_patch = torch.rand((3, 200, 200), 
                               requires_grad=True, 
                               device=self.device)
       self.adv_patch2 = patch2.clone().detach().to(self.device)

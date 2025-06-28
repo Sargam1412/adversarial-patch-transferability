@@ -204,8 +204,8 @@ class PatchTrainer():
           module.register_forward_hook(self.hook1)
         if name == self.layer2_name:
           module.register_forward_hook(self.hook12)
-        if name == self.layer3_name:
-          module.register_forward_hook(self.hook13)
+        # if name == self.layer3_name:
+        #   module.register_forward_hook(self.hook13)
         if name == self.layer4_name:
           module.register_forward_hook(self.hook14)
 
@@ -215,8 +215,8 @@ class PatchTrainer():
           module.register_forward_hook(self.hook2)
         if name == self.layer2_name:
           module.register_forward_hook(self.hook22)
-        if name == self.layer3_name:
-          module.register_forward_hook(self.hook23)
+        # if name == self.layer3_name:
+        #   module.register_forward_hook(self.hook23)
         if name == self.layer4_name:
           module.register_forward_hook(self.hook24)
           
@@ -288,23 +288,23 @@ class PatchTrainer():
       
     return H1, H2, H3, H4
 
-  def train(self, H1, H2, H3, H4):
+  def train(self, H1, H2, H4):#, H3
     epochs, iters_per_epoch, max_iters = self.epochs, self.iters_per_epoch, self.max_iters
     self.feature_maps_adv1 = None
     self.feature_maps_rand1 = None
     self.feature_maps_adv2 = None
     self.feature_maps_rand2 = None
-    self.feature_maps_adv3 = None
-    self.feature_maps_rand3 = None
+    # self.feature_maps_adv3 = None
+    # self.feature_maps_rand3 = None
     self.feature_maps_adv4 = None
     self.feature_maps_rand4 = None
     H1 /= torch.norm(H1, p=2, dim=(2,3), keepdim=True) + 1e-8 
     H2 /= torch.norm(H2, p=2, dim=(2,3), keepdim=True) + 1e-8
-    H3 /= torch.norm(H3, p=2, dim=(2,3), keepdim=True) + 1e-8
+    # H3 /= torch.norm(H3, p=2, dim=(2,3), keepdim=True) + 1e-8
     H4 /= torch.norm(H4, p=2, dim=(2,3), keepdim=True) + 1e-8
     self.logger.info(f'H1.shape: {H1.shape}')
     self.logger.info(f'H2.shape: {H2.shape}')
-    self.logger.info(f'H3.shape: {H3.shape}')
+    # self.logger.info(f'H3.shape: {H3.shape}')
     self.logger.info(f'H4.shape: {H4.shape}')
     start_time = time.time()
     self.logger.info('Start training, Total Epochs: {:d} = Iterations per epoch {:d}'.format(epochs, iters_per_epoch))
@@ -345,7 +345,7 @@ class PatchTrainer():
           for i in range(image.shape[0]):
             F1 = ((self.feature_maps_adv1[i]-self.feature_maps_rand1[i])*H1[idx[i]]) + (H1[idx[i]])**2
             F2 = ((self.feature_maps_adv2[i]-self.feature_maps_rand2[i])*H2[idx[i]]) + (H2[idx[i]])**2
-            F3 = ((self.feature_maps_adv3[i]-self.feature_maps_rand3[i])*H3[idx[i]]) + (H3[idx[i]])**2
+            # F3 = ((self.feature_maps_adv3[i]-self.feature_maps_rand3[i])*H3[idx[i]]) + (H3[idx[i]])**2
             F4 = ((self.feature_maps_adv4[i]-self.feature_maps_rand4[i])*H4[idx[i]]) + (H4[idx[i]])**2
           #plt.imshow(output.argmax(dim =1)[0].cpu().detach().numpy())
           #plt.show()
@@ -354,10 +354,10 @@ class PatchTrainer():
           # Compute adaptive loss
           loss1 = self.criterion.compute_trainloss(F1)
           loss2 = self.criterion.compute_trainloss(F2)
-          loss3 = self.criterion.compute_trainloss(F3)
+          # loss3 = self.criterion.compute_trainloss(F3)
           loss4 = self.criterion.compute_trainloss(F4)
           #loss = self.criterion.compute_loss_direct(output, patched_label)
-          total_loss += (loss1.item() + loss2.item() + loss3.item() + loss4.item())
+          total_loss += (loss1.item() + loss2.item() + loss4.item())# + loss3.item()
           #break
 
           ## metrics
@@ -381,7 +381,7 @@ class PatchTrainer():
           # loss4.backward()
           grad1 = torch.autograd.grad(loss1, self.adv_patch1, retain_graph=True)[0]
           grad2 = torch.autograd.grad(loss2, self.adv_patch2, retain_graph=True)[0]
-          grad3 = torch.autograd.grad(loss3, self.adv_patch3, retain_graph=True)[0]
+          grad3 = torch.autograd.grad(loss2, self.adv_patch3, retain_graph=True)[0]
           grad4 = torch.autograd.grad(loss4, self.adv_patch4, retain_graph=True)[0]
           with torch.no_grad():
               #self.patch += self.epsilon * self.patch.grad.sign()  # Update patch using FGSM-style ascent

@@ -128,7 +128,7 @@ def main():
     
     # Run optimization
     save_path = os.path.join(args.output_dir, f'optimized_patch.{args.patch_ext}')
-    patch1 patch2, patch3, patch4, iou_metrics = optimizer.optimize_patch(
+    patch1, patch2, patch3, patch4, iou_metrics = optimizer.optimize_patch(
         initial_patch=args.initial_patch,
         num_images=args.num_images,
         save_path=save_path

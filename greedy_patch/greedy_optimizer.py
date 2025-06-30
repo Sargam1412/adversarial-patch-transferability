@@ -259,7 +259,7 @@ class GreedyPatchOptimizer:
         # loss3 = self.criterion.compute_trainloss(F3)
         loss4 = self.criterion.compute_trainloss(F4)
         #loss = self.criterion.compute_loss_direct(output, patched_label)
-        total_loss += (loss1.item() + loss2.item() + loss4.item())# + loss3.item()
+        #total_loss += (loss1.item() + loss2.item() + loss4.item())# + loss3.item()
         grad1 = torch.autograd.grad(loss1, self.adv_patch1, retain_graph=True)[0]
         grad2 = torch.autograd.grad(loss2, self.adv_patch2, retain_graph=True)[0]
         grad3 = torch.autograd.grad(loss2, self.adv_patch3, retain_graph=True)[0]

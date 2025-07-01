@@ -103,35 +103,43 @@ class GreedyPatchOptimizer:
     # Hook to store feature map
     def hook1(self, module, input, output):
       self.feature_maps_adv1 = output
-      output.retain_grad()
+      if output.requires_grad:
+        output.retain_grad()
 
     def hook12(self, module, input, output):
       self.feature_maps_adv2 = output
-      output.retain_grad()
+      if output.requires_grad:
+        output.retain_grad()
 
     def hook13(self, module, input, output):
       self.feature_maps_adv3 = output
-      output.retain_grad()
+      if output.requires_grad:
+        output.retain_grad()
 
     def hook14(self, module, input, output):
       self.feature_maps_adv4 = output
-      output.retain_grad()
+      if output.requires_grad:
+        output.retain_grad()
 
     def hook2(self, module, input, output):
       self.feature_maps_rand1 = output
-      output.retain_grad()
+      if output.requires_grad:
+        output.retain_grad()
 
     def hook22(self, module, input, output):
       self.feature_maps_rand2 = output
-      output.retain_grad()
+      if output.requires_grad:
+        output.retain_grad()
 
     def hook23(self, module, input, output):
       self.feature_maps_rand3 = output
-      output.retain_grad()
+      if output.requires_grad:
+        output.retain_grad()
 
     def hook24(self, module, input, output):
       self.feature_maps_rand4 = output
-      output.retain_grad()
+      if output.requires_grad:
+        output.retain_grad()
 
     def register_forward_hook1(self):
       for name, module in self.model1.model.named_modules():

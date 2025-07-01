@@ -54,7 +54,7 @@ class GreedyPatchOptimizer:
         self.train_dataloader = torch.utils.data.DataLoader(
             dataset=cityscape_train,
             batch_size=1,  # We process one image at a time for greedy optimization
-            shuffle=config.train.shuffle,
+            shuffle=False,
             num_workers=config.train.num_workers,
             pin_memory=config.train.pin_memory,
             drop_last=config.train.drop_last

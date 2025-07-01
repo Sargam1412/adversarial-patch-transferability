@@ -521,7 +521,7 @@ class GreedyPatchOptimizer:
             # Evaluate the patch after processing this image
             with torch.no_grad():
                 patched_image, patched_label = self.apply_patch(image, true_label, adv_patch1, adv_patch2, adv_patch3, adv_patch4)
-                output = self.model.predict(patched_image, patched_label.shape)
+                output = self.model1.predict(patched_image, patched_label.shape)
                 self.metric.update(output, patched_label)
                 pixAcc, mIoU = self.metric.get()
                 

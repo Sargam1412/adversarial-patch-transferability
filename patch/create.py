@@ -12,6 +12,31 @@ class Patch:
             transforms.RandomResizedCrop(size=self.patch_size, scale=(0.8, 1.2)),  # Random scaling
         ])
 
+    def apply_patch_grad(self, image, label, patch):
+        patched_image = image.clone()
+        patched_label = label.clone()
+        _,c, h, w = image.shape
+        location = self.config.patch.loc
+        # Get patch starting coordinates
+        if location == "random":
+            x = random.randint(0, w - self.patch_size)
+            y = random.randint(0, h - self.patch_size)
+        elif location == "center":
+            x = (w - self.patch_size) // 2
+            y = (h - self.patch_size) // 2
+        elif location == "corner":
+            x = 0
+            y = 0
+        elif isinstance(location, tuple):
+            x, y = location
+        else:
+            raise ValueError("Invalid location for patch.")
+
+        x_end, y_end = x + self.patch_size, y + self.patch_size
+        transformed_patch = patch
+        patched_image[:,:, y:y_end, x:x_end] = transformed_patch
+        patched_label[:, y:y_end, x:x_end] = self.config.train.ignore_label
+        return patched_image, patched_label
 
     def apply_patch(self, image, label, patch1, patch2, patch3, patch4):#
         """

@@ -37,6 +37,7 @@ class PatchTrainer():
       self.log_per_iters = config.train.log_per_iters
       self.patch_size = config.patch.size
       self.apply_patch = Patch(config).apply_patch
+      self.apply_patch_grad = Patch(config).apply_patch_grad
       self.epsilon = config.optimizer.init_lr
 
       cityscape_train = Cityscapes(

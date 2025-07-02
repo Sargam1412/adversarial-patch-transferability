@@ -217,23 +217,23 @@ class PatchTrainer():
 
   def register_forward_hook1(self):
     for name, module in self.model1.model.named_modules():
-        if name == self.layer1_name:
-          module.register_forward_hook(self.hook1)
+        # if name == self.layer1_name:
+        #   module.register_forward_hook(self.hook1)
         if name == self.layer2_name:
           module.register_forward_hook(self.hook12)
-        # if name == self.layer3_name:
-        #   module.register_forward_hook(self.hook13)
+        if name == self.layer3_name:
+          module.register_forward_hook(self.hook13)
         if name == self.layer4_name:
           module.register_forward_hook(self.hook14)
 
   def register_forward_hook2(self):
     for name, module in self.model2.model.named_modules():
-        if name == self.layer1_name:
-          module.register_forward_hook(self.hook2)
+        # if name == self.layer1_name:
+        #   module.register_forward_hook(self.hook2)
         if name == self.layer2_name:
           module.register_forward_hook(self.hook22)
-        # if name == self.layer3_name:
-        #   module.register_forward_hook(self.hook23)
+        if name == self.layer3_name:
+          module.register_forward_hook(self.hook23)
         if name == self.layer4_name:
           module.register_forward_hook(self.hook24)
           

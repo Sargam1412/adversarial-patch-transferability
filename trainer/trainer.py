@@ -301,6 +301,12 @@ class PatchTrainer():
           # Optional: delete big tensors
           del patched_image, output, grad_feature_map1, grad_feature_map2, grad_feature_map4#, grad_feature_map3
           torch.cuda.empty_cache()
+      path='/kaggle/working/logs/H1_pidnet_l.pt'
+      torch.save(H1,path)
+      path='/kaggle/working/logs/H2_pidnet_l.pt'
+      torch.save(H2,path)
+      path='/kaggle/working/logs/H4_pidnet_l.pt'
+      torch.save(H4,path)
   
       
     return H1, H2, H4#, H3

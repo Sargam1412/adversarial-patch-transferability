@@ -91,6 +91,9 @@ class PatchTrainer():
       self.criterion = PatchLoss(self.config)
       ## optimizer
       # Initialize adversarial patch (random noise)
+      self.adv_patch = torch.rand((3, 100, 100), 
+                               requires_grad=True, 
+                               device=self.device)
       self.adv_patch1 = patch1.clone().detach().to(self.device)
       self.adv_patch1.requires_grad = True#torch.rand((3, 100, 100), 
                               # requires_grad=True, 
@@ -248,7 +251,7 @@ class PatchTrainer():
           image, true_label = image.to(self.device), true_label.to(self.device)
   
           # 1. Apply the patch to the image
-          patched_image, patched_label = self.apply_patch(image,true_label,self.adv_patch)
+          patched_image, patched_label = self.apply_patch_grad(image,true_label,self.adv_patch)
   
           # 2. Forward pass
           output = self.model1.predict(patched_image,patched_label.shape)

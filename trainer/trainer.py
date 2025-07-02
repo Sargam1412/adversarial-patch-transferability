@@ -299,7 +299,7 @@ class PatchTrainer():
             H4[idx[i]] = grad_feature_map4[i] if H4[idx[i]] is None else H4[idx[i]] + grad_feature_map4[i].detach()
           self.logger.info(f" Sample number: {i_iter+1}/1000")
           # Optional: delete big tensors
-          del patched_image, output, grad_feature_map1, grad_feature_map2, grad_feature_map3, grad_feature_map4
+          del patched_image, output, grad_feature_map1, grad_feature_map2, grad_feature_map4#, grad_feature_map3
           torch.cuda.empty_cache()
   
       

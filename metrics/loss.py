@@ -64,7 +64,7 @@ class PatchLoss(nn.Module):
         safe_labels = label.clone()
         safe_labels[~ignore_mask] = 0  # Replace ignored pixels with 0 temporarily
         
-        true_labels_unsq = safe_labels.unsqueeze(1)  # (B, 1, H, W)
+        true_labels_unsq = safe_labels.unsqueeze(1).long()  # (B, 1, H, W)
         true_logits = torch.gather(model_output, 1, true_labels_unsq)  # (B, 1, H, W)
         
         B, C, H, W = model_output.shape

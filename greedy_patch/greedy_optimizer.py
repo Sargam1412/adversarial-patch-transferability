@@ -529,19 +529,19 @@ class GreedyPatchOptimizer:
                 IoU.append(self.metric.get(full=True))
                 self.metric.reset()
         
-        # Save the optimized patch if a path is provided
-        # if save_path:
-        #     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        #     torch.save(patch, save_path)
-        #     self.logger.info(f"Saved optimized patch to {save_path}")
-        safety1 = adv_patch1.clone()
-        pickle.dump( safety1.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy1"+".p", "wb" ) )
-        safety2 = adv_patch2.clone()
-        pickle.dump( safety2.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy2"+".p", "wb" ) )
-        safety3 = adv_patch3.clone()
-        pickle.dump( safety3.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy3"+".p", "wb" ) )
-        safety4 = adv_patch4.clone()
-        pickle.dump( safety4.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy4"+".p", "wb" ) )
+            # Save the optimized patch if a path is provided
+            # if save_path:
+            #     os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            #     torch.save(patch, save_path)
+            #     self.logger.info(f"Saved optimized patch to {save_path}")
+            safety1 = adv_patch1.clone()
+            pickle.dump( safety1.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy1"+".p", "wb" ) )
+            safety2 = adv_patch2.clone()
+            pickle.dump( safety2.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy2"+".p", "wb" ) )
+            safety3 = adv_patch3.clone()
+            pickle.dump( safety3.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy3"+".p", "wb" ) )
+            safety4 = adv_patch4.clone()
+            pickle.dump( safety4.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy4"+".p", "wb" ) )
         
         total_time = time.time() - start_time
         self.logger.info(f"Greedy optimization completed in {str(datetime.timedelta(seconds=int(total_time)))}")

@@ -23,7 +23,7 @@ import pickle
 class PatchTrainer():
   def __init__(self,config,main_logger,model_name,patch1,patch2,patch3,patch4):
       self.config = config
-      self.start_epoch = 15
+      self.start_epoch = 0
       self.end_epoch = 30
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size

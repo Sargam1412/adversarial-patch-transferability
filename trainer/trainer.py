@@ -240,9 +240,9 @@ class PatchTrainer():
   
   def get_agg_gradient(self):
     self.feature_maps = None
-    H1 = torch.zeros((1000, self.feature_map1_shape[0], self.feature_map1_shape[1], self.feature_map1_shape[2]), device=self.device)  # Aggregate gradient
+    #H1 = torch.zeros((1000, self.feature_map1_shape[0], self.feature_map1_shape[1], self.feature_map1_shape[2]), device=self.device)  # Aggregate gradient
     H2 = torch.zeros((1000, self.feature_map2_shape[0], self.feature_map2_shape[1], self.feature_map2_shape[2]), device=self.device)
-    #H3 = torch.zeros((1000, self.feature_map3_shape[0], self.feature_map3_shape[1], self.feature_map3_shape[2]), device=self.device)
+    H3 = torch.zeros((1000, self.feature_map3_shape[0], self.feature_map3_shape[1], self.feature_map3_shape[2]), device=self.device)
     H4 = torch.zeros((1000, self.feature_map4_shape[0], self.feature_map4_shape[1], self.feature_map4_shape[2]), device=self.device)
     for epoch in range(30):
       self.logger.info(f"\nStarting gradient epoch {epoch+1}/30...")
@@ -268,23 +268,23 @@ class PatchTrainer():
           with torch.no_grad():
               self.adv_patch += self.epsilon * self.adv_patch.grad.data.sign()
               self.adv_patch.clamp_(0, 1)  # Keep pixel values in valid range
-          grad_feature_map1 = self.feature_maps_adv1.grad  # Only works if feature_maps.requires_grad=True
+          #grad_feature_map1 = self.feature_maps_adv1.grad  # Only works if feature_maps.requires_grad=True
           grad_feature_map2 = self.feature_maps_adv2.grad
-          #grad_feature_map3 = self.feature_maps_adv3.grad
+          grad_feature_map3 = self.feature_maps_adv3.grad
           grad_feature_map4 = self.feature_maps_adv4.grad
           
           # If not requires_grad, use autograd.grad instead
-          if grad_feature_map1 is None:
-              print("grad_feature_map1 is None")
-              grad_feature_map1 = torch.autograd.grad(loss, self.feature_maps_adv1, retain_graph=True)[0]
+          # if grad_feature_map1 is None:
+          #     print("grad_feature_map1 is None")
+          #     grad_feature_map1 = torch.autograd.grad(loss, self.feature_maps_adv1, retain_graph=True)[0]
 
           if grad_feature_map2 is None:
               print("grad_feature_map2 is None")
               grad_feature_map2 = torch.autograd.grad(loss, self.feature_maps_adv2, retain_graph=True)[0]
 
-          # if grad_feature_map3 is None:
-          #     print("grad_feature_map3 is None")
-          #     grad_feature_map3 = torch.autograd.grad(loss, self.feature_maps_adv3, retain_graph=True)[0]
+          if grad_feature_map3 is None:
+              print("grad_feature_map3 is None")
+              grad_feature_map3 = torch.autograd.grad(loss, self.feature_maps_adv3, retain_graph=True)[0]
 
           if grad_feature_map4 is None:
               print("grad_feature_map4 is None")
@@ -293,23 +293,23 @@ class PatchTrainer():
           # 5. Normalize and aggregate
           # grad_feature_map /= torch.norm(grad_feature_map, p=2, dim=(1,2,3), keepdim=True) + 1e-8
           for i in range(image.shape[0]):
-            H1[idx[i]] = grad_feature_map1[i] if H1[idx[i]] is None else H1[idx[i]] + grad_feature_map1[i].detach()
+            #H1[idx[i]] = grad_feature_map1[i] if H1[idx[i]] is None else H1[idx[i]] + grad_feature_map1[i].detach()
             H2[idx[i]] = grad_feature_map2[i] if H2[idx[i]] is None else H2[idx[i]] + grad_feature_map2[i].detach()
-            #H3[idx[i]] = grad_feature_map3[i] if H3[idx[i]] is None else H3[idx[i]] + grad_feature_map3[i].detach()
+            H3[idx[i]] = grad_feature_map3[i] if H3[idx[i]] is None else H3[idx[i]] + grad_feature_map3[i].detach()
             H4[idx[i]] = grad_feature_map4[i] if H4[idx[i]] is None else H4[idx[i]] + grad_feature_map4[i].detach()
           self.logger.info(f" Sample number: {i_iter+1}/1000")
           # Optional: delete big tensors
-          del patched_image, output, grad_feature_map1, grad_feature_map2, grad_feature_map4#, grad_feature_map3
+          del patched_image, output, grad_feature_map2, grad_feature_map3, grad_feature_map4#, grad_feature_map1
           torch.cuda.empty_cache()
-      path='/kaggle/working/logs/H1_pidnet_l.pt'
-      torch.save(H1,path)
       path='/kaggle/working/logs/H2_pidnet_l.pt'
       torch.save(H2,path)
+      path='/kaggle/working/logs/H3_pidnet_l.pt'
+      torch.save(H3,path)
       path='/kaggle/working/logs/H4_pidnet_l.pt'
       torch.save(H4,path)
   
       
-    return H1, H2, H4#, H3
+    return H2, H3, H4#, H1
 
   def train(self, H1, H2, H4):#, H3
     epochs, iters_per_epoch, max_iters = self.epochs, self.iters_per_epoch, self.max_iters

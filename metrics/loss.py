@@ -59,7 +59,7 @@ class PatchLoss(nn.Module):
         # #return loss
         # return loss_correct 
         #return mean_loss_per_image
-        true_labels_unsq = label.unsqueeze(1)  # (B, 1, H, W)
+        true_labels_unsq = label.unsqueeze(1).long()  # (B, 1, H, W)
         true_logits = torch.gather(model_output, 1, true_labels_unsq)  # (B, 1, H, W)
     
         B, C, H, W = model_output.shape

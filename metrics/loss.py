@@ -59,19 +59,26 @@ class PatchLoss(nn.Module):
         # #return loss
         # return loss_correct 
         #return mean_loss_per_image
-        true_labels_unsq = label.unsqueeze(1).long()  # (B, 1, H, W)
-        true_logits = torch.gather(model_output, 1, true_labels_unsq)  # (B, 1, H, W)
-    
-        B, C, H, W = model_output.shape
-        mask = torch.ones_like(model_output, dtype=torch.bool)
+        ignore_mask = (true_labels != 255)  # shape: (B, H, W)
+
+        safe_labels = true_labels.clone()
+        safe_labels[~ignore_mask] = 0  # Replace ignored pixels with 0 temporarily
+        
+        true_labels_unsq = safe_labels.unsqueeze(1)  # (B, 1, H, W)
+        true_logits = torch.gather(logits, 1, true_labels_unsq)  # (B, 1, H, W)
+        
+        B, C, H, W = logits.shape
+        mask = torch.ones_like(logits, dtype=torch.bool)
         mask.scatter_(1, true_labels_unsq, False)
-    
-        other_logits = model_output.masked_fill(~mask, float('-inf'))
+        other_logits = logits.masked_fill(~mask, float('-inf'))
+        
         max_other_logits, _ = other_logits.max(dim=1, keepdim=True)
-    
-        loss_per_pixel = max_other_logits - true_logits
-        loss = loss_per_pixel.mean()
-    
+        
+        loss_per_pixel = max_other_logits - true_logits  # (B, 1, H, W)
+        loss_per_pixel = loss_per_pixel.squeeze(1)      # (B, H, W)
+        
+        valid_loss = loss_per_pixel[ignore_mask]
+        loss = valid_loss.mean()
         return loss
 
     def compute_trainloss(self, F, omega = 1.2):

@@ -153,6 +153,15 @@ class PatchTrainer():
       elif 'pidnet_m' in self.model_name:
         self.layer_name = 'layer3.2.bn2'
         self.feature_map_shape = [256,64,64]
+      elif 'pidnet_l' in self.model_name:
+        self.layer1_name = 'layer1.0.bn2' 
+        self.feature_map1_shape = [64, 256, 256]
+        self.layer2_name = 'layer3.2.bn2' 
+        self.feature_map2_shape = [256,64,64]
+        self.layer3_name = 'layer3_.1.bn2' 
+        self.feature_map3_shape = [128, 128, 128]
+        self.layer4_name = 'layer5.1.relu' 
+        self.feature_map4_shape = [512, 16, 16]
       elif 'bisenet' in self.model_name:
         self.layer_name = 'segment.S3.1.relu'
         self.feature_map_shape=[32,128,128]
@@ -229,7 +238,7 @@ class PatchTrainer():
     self.feature_maps = None
     H1 = torch.zeros((1000, self.feature_map1_shape[0], self.feature_map1_shape[1], self.feature_map1_shape[2]), device=self.device)  # Aggregate gradient
     H2 = torch.zeros((1000, self.feature_map2_shape[0], self.feature_map2_shape[1], self.feature_map2_shape[2]), device=self.device)
-    H3 = torch.zeros((1000, self.feature_map3_shape[0], self.feature_map3_shape[1], self.feature_map3_shape[2]), device=self.device)
+    #H3 = torch.zeros((1000, self.feature_map3_shape[0], self.feature_map3_shape[1], self.feature_map3_shape[2]), device=self.device)
     H4 = torch.zeros((1000, self.feature_map4_shape[0], self.feature_map4_shape[1], self.feature_map4_shape[2]), device=self.device)
     for epoch in range(30):
       self.logger.info(f"\nStarting gradient epoch {epoch+1}/30...")
@@ -257,7 +266,7 @@ class PatchTrainer():
               self.adv_patch.clamp_(0, 1)  # Keep pixel values in valid range
           grad_feature_map1 = self.feature_maps_adv1.grad  # Only works if feature_maps.requires_grad=True
           grad_feature_map2 = self.feature_maps_adv2.grad
-          grad_feature_map3 = self.feature_maps_adv3.grad
+          #grad_feature_map3 = self.feature_maps_adv3.grad
           grad_feature_map4 = self.feature_maps_adv4.grad
           
           # If not requires_grad, use autograd.grad instead
@@ -269,9 +278,9 @@ class PatchTrainer():
               print("grad_feature_map2 is None")
               grad_feature_map2 = torch.autograd.grad(loss, self.feature_maps_adv2, retain_graph=True)[0]
 
-          if grad_feature_map3 is None:
-              print("grad_feature_map3 is None")
-              grad_feature_map3 = torch.autograd.grad(loss, self.feature_maps_adv3, retain_graph=True)[0]
+          # if grad_feature_map3 is None:
+          #     print("grad_feature_map3 is None")
+          #     grad_feature_map3 = torch.autograd.grad(loss, self.feature_maps_adv3, retain_graph=True)[0]
 
           if grad_feature_map4 is None:
               print("grad_feature_map4 is None")
@@ -282,7 +291,7 @@ class PatchTrainer():
           for i in range(image.shape[0]):
             H1[idx[i]] = grad_feature_map1[i] if H1[idx[i]] is None else H1[idx[i]] + grad_feature_map1[i].detach()
             H2[idx[i]] = grad_feature_map2[i] if H2[idx[i]] is None else H2[idx[i]] + grad_feature_map2[i].detach()
-            H3[idx[i]] = grad_feature_map3[i] if H3[idx[i]] is None else H3[idx[i]] + grad_feature_map3[i].detach()
+            #H3[idx[i]] = grad_feature_map3[i] if H3[idx[i]] is None else H3[idx[i]] + grad_feature_map3[i].detach()
             H4[idx[i]] = grad_feature_map4[i] if H4[idx[i]] is None else H4[idx[i]] + grad_feature_map4[i].detach()
           self.logger.info(f" Sample number: {i_iter+1}/1000")
           # Optional: delete big tensors
@@ -290,7 +299,7 @@ class PatchTrainer():
           torch.cuda.empty_cache()
   
       
-    return H1, H2, H3, H4
+    return H1, H2, H4#, H3
 
   def train(self, H1, H2, H4):#, H3
     epochs, iters_per_epoch, max_iters = self.epochs, self.iters_per_epoch, self.max_iters

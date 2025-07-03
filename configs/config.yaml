@@ -6,7 +6,7 @@ experiment:
 
 ### 1.Model
 model:
-  name: 'pidnet_s'
+  name: 'pidnet_l'
 
 ### 2. Data
 dataset:

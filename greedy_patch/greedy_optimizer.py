@@ -78,7 +78,7 @@ class GreedyPatchOptimizer:
         self.H3 = torch.load('/kaggle/working/logs/H3_pidnet_l.pt', map_location = self.device)
         self.H2 = torch.load('/kaggle/working/logs/H2_pidnet_l.pt', map_location = self.device)
         self.H4 = torch.load('/kaggle/working/logs/H4_pidnet_l.pt', map_location = self.device)
-        self.H1 /= torch.norm(self.H3, p=2, dim=(2,3), keepdim=True) + 1e-8 
+        self.H3 /= torch.norm(self.H3, p=2, dim=(2,3), keepdim=True) + 1e-8 
         self.H2 /= torch.norm(self.H2, p=2, dim=(2,3), keepdim=True) + 1e-8
         self.H4 /= torch.norm(self.H4, p=2, dim=(2,3), keepdim=True) + 1e-8
 

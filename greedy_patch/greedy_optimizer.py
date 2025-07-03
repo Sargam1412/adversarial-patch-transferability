@@ -357,7 +357,7 @@ class GreedyPatchOptimizer:
             x_coords = sorted_indices % w
             
             # Process pixels in order of priority
-            for idx in range(20):
+            for idx in range(50):
                 y, x = y_coords[idx].item(), x_coords[idx].item()
                 
                 # Try different adjustments for each channel
@@ -386,7 +386,7 @@ class GreedyPatchOptimizer:
                 adv_patch1.clamp_(0, 1)
                 
                 # Log progress periodically
-                if idx % 100 == 0:
+                if idx % 10 == 0:
                     self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch1")
 
             # For adv_patch2
@@ -400,7 +400,7 @@ class GreedyPatchOptimizer:
             x_coords = sorted_indices % w
             
             # Process pixels in order of priority
-            for idx in range(20):
+            for idx in range(50):
                 y, x = y_coords[idx].item(), x_coords[idx].item()
                 
                 # Try different adjustments for each channel
@@ -429,7 +429,7 @@ class GreedyPatchOptimizer:
                 adv_patch2.clamp_(0, 1)
                 
                 # Log progress periodically
-                if idx % 100 == 0:
+                if idx % 10 == 0:
                     self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch2")
 
             # For adv_patch3
@@ -443,7 +443,7 @@ class GreedyPatchOptimizer:
             x_coords = sorted_indices % w
             
             # Process pixels in order of priority
-            for idx in range(20):
+            for idx in range(50):
                 y, x = y_coords[idx].item(), x_coords[idx].item()
                 
                 # Try different adjustments for each channel
@@ -472,7 +472,7 @@ class GreedyPatchOptimizer:
                 adv_patch3.clamp_(0, 1)
                 
                 # Log progress periodically
-                if idx % 100 == 0:
+                if idx % 10 == 0:
                     self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch3")
 
             # For adv_patch4
@@ -486,7 +486,7 @@ class GreedyPatchOptimizer:
             x_coords = sorted_indices % w
             
             # Process pixels in order of priority
-            for idx in range(20):
+            for idx in range(50):
                 y, x = y_coords[idx].item(), x_coords[idx].item()
                 
                 # Try different adjustments for each channel
@@ -515,7 +515,7 @@ class GreedyPatchOptimizer:
                 adv_patch4.clamp_(0, 1)
                 
                 # Log progress periodically
-                if idx % 100 == 0:
+                if idx % 10 == 0:
                     self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch4")
             
             # Evaluate the patch after processing this image

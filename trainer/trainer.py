@@ -92,37 +92,37 @@ class PatchTrainer():
       self.criterion = PatchLoss(self.config)
       ## optimizer
       # Initialize adversarial patch (random noise)
-      self.adv_patch = torch.rand((3, 200, 200), 
-                               requires_grad=True, 
-                               device=self.device)
+      # self.adv_patch = torch.rand((3, 200, 200), 
+      #                          requires_grad=True, 
+      #                          device=self.device)
       self.adv_patch1 = patch1.clone().detach().to(self.device)
       self.adv_patch1.requires_grad = True#torch.rand((3, 100, 100), 
                               # requires_grad=True, 
                               # device=self.device)
-      self.rand_patch1 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
+      # self.rand_patch1 = torch.rand((3, 100, 100), 
+      #                         requires_grad=True, 
+      #                         device=self.device)
       self.adv_patch2 = patch2.clone().detach().to(self.device)
       self.adv_patch2.requires_grad = True#torch.rand((3, 100, 100), 
                               # requires_grad=True, 
                               # device=self.device)
-      self.rand_patch2 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
+      # self.rand_patch2 = torch.rand((3, 100, 100), 
+      #                         requires_grad=True, 
+      #                         device=self.device)
       self.adv_patch3 = patch3.clone().detach().to(self.device)
       self.adv_patch3.requires_grad = True#torch.rand((3, 100, 100), 
                               # requires_grad=True, 
                               # device=self.device)
-      self.rand_patch3 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
+      # self.rand_patch3 = torch.rand((3, 100, 100), 
+      #                         requires_grad=True, 
+      #                         device=self.device)
       self.adv_patch4 = patch4.clone().detach().to(self.device)
       self.adv_patch4.requires_grad = True#torch.rand((3, 100, 100), 
                               # requires_grad=True, 
                               # device=self.device)
-      self.rand_patch4 = torch.rand((3, 100, 100), 
-                              requires_grad=True, 
-                              device=self.device)
+      # self.rand_patch4 = torch.rand((3, 100, 100), 
+      #                         requires_grad=True, 
+      #                         device=self.device)
       
       # # Define optimizer
       # self.optimizer = torch.optim.SGD(params = [self.patch],
@@ -360,7 +360,7 @@ class PatchTrainer():
           
           # Randomly place patch in image and label(put ignore index)
           patched_image_adv, patched_label_adv = self.apply_patch(image,true_label,self.adv_patch1,self.adv_patch2,self.adv_patch3,self.adv_patch4)
-          patched_image_rand, patched_label_rand = self.apply_patch(image,true_label,self.rand_patch1,self.rand_patch2,self.rand_patch3,self.rand_patch4)
+          patched_image_rand, patched_label_rand = self.apply_patch_rand(image,true_label)
           # fig = plt.figure()
           # ax = fig.add_subplot(1,2,1)
           # ax.imshow(patched_image[0].permute(1,2,0).cpu().detach().numpy())
@@ -415,23 +415,23 @@ class PatchTrainer():
           grad4 = torch.autograd.grad(loss4, self.adv_patch4, retain_graph=True)[0]
           with torch.no_grad():
               #self.patch += self.epsilon * self.patch.grad.sign()  # Update patch using FGSM-style ascent
-              norm_grad1 = grad1/ (torch.norm(grad1) + 1e-8)
-              momentum1 = (0.9*momentum1) + norm_grad1
+              #norm_grad1 = grad1/ (torch.norm(grad1) + 1e-8)
+              momentum1 = (0.9*momentum1) + (grad1/ (torch.norm(grad1) + 1e-8))
               self.adv_patch1 += self.epsilon * momentum1.sign()
               #self.patch += self.epsilon * self.patch.grad.data.sign()
               self.adv_patch1.clamp_(0, 1)  # Keep pixel values in valid range
-              norm_grad2 = grad2/ (torch.norm(grad2) + 1e-8)
-              momentum2 = (0.9*momentum2) + norm_grad2
+              #norm_grad2 = grad2/ (torch.norm(grad2) + 1e-8)
+              momentum2 = (0.9*momentum2) + (grad2/ (torch.norm(grad2) + 1e-8))
               self.adv_patch2 += self.epsilon * momentum2.sign()
               #self.patch += self.epsilon * self.patch.grad.data.sign()
               self.adv_patch2.clamp_(0, 1)  # Keep pixel values in valid range
-              norm_grad3 = grad3/ (torch.norm(grad3) + 1e-8)
-              momentum3 = (0.9*momentum3) + norm_grad3
+              #norm_grad3 = grad3/ (torch.norm(grad3) + 1e-8)
+              momentum3 = (0.9*momentum3) + (grad3/ (torch.norm(grad3) + 1e-8))
               self.adv_patch3 += self.epsilon * momentum3.sign()
               #self.patch += self.epsilon * self.patch.grad.data.sign()
               self.adv_patch3.clamp_(0, 1)  # Keep pixel values in valid range
-              norm_grad4 = grad4/ (torch.norm(grad4) + 1e-8)
-              momentum4 = (0.9*momentum4) + norm_grad4
+              #norm_grad4 = grad4/ (torch.norm(grad4) + 1e-8)
+              momentum4 = (0.9*momentum4) + (grad3/ (torch.norm(grad3) + 1e-8))
               self.adv_patch4 += self.epsilon * momentum4.sign()
               #self.patch += self.epsilon * self.patch.grad.data.sign()
               self.adv_patch4.clamp_(0, 1)  # Keep pixel values in valid range

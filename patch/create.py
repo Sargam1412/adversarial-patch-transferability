@@ -78,3 +78,40 @@ class Patch:
         patched_label[:, y:y_end, x:x_end] = self.config.train.ignore_label
         #print(patched_label[:, y:y_end, x:x_end])
         return patched_image, patched_label
+
+    def apply_patch_rand(self, image, label):#
+        """
+        Overlay the adversarial patch on the image at a given position.
+        """
+        patched_image = image.clone()
+        patched_label = label.clone()
+        _,c, h, w = image.shape
+        location = self.config.patch.loc
+
+        # Get patch starting coordinates
+        if location == "random":
+            x = random.randint(0, w - self.patch_size)
+            y = random.randint(0, h - self.patch_size)
+        elif location == "center":
+            x = (w - self.patch_size) // 2
+            y = (h - self.patch_size) // 2
+        elif location == "corner":
+            x = 0
+            y = 0
+        elif isinstance(location, tuple):
+            x, y = location
+        else:
+            raise ValueError("Invalid location for patch.")
+
+        x_end, y_end = x + self.patch_size, y + self.patch_size
+
+        # Apply transformation to patch (EOT)
+        #transformed_patch = self.eot_transforms(patch)
+        #transformed_patch = patch
+
+        # Overlay patch onto the image and accordingly edit the label
+        patched_image[:,:, y:y_end, x:x_end] = torch.rand((3, 200, 200))
+        #patched_image[:,:, y:y_end, x:x_end] = transformed_patch
+        patched_label[:, y:y_end, x:x_end] = self.config.train.ignore_label
+        #print(patched_label[:, y:y_end, x:x_end])
+        return patched_image, patched_label

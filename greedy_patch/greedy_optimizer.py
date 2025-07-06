@@ -353,17 +353,17 @@ class GreedyPatchOptimizer:
                 grad1, grad2, grad3, grad4 = self.compute_grad(image, adv_patch1, adv_patch2, adv_patch3, adv_patch4, true_label, index)
                 with torch.no_grad():
                   momentum1 = (0.9*momentum1) + (grad1/ (torch.norm(grad1) + 1e-8))
-                  self.adv_patch1 += self.epsilon * momentum1.sign()
-                  self.adv_patch1.clamp_(0, 1)  # Keep pixel values in valid range
+                  adv_patch1 += self.epsilon * momentum1.sign()
+                  adv_patch1.clamp_(0, 1)  # Keep pixel values in valid range
                   momentum2 = (0.9*momentum2) + (grad2/ (torch.norm(grad2) + 1e-8))
-                  self.adv_patch2 += self.epsilon * momentum2.sign()
-                  self.adv_patch2.clamp_(0, 1)  # Keep pixel values in valid range
+                  adv_patch2 += self.epsilon * momentum2.sign()
+                  adv_patch2.clamp_(0, 1)  # Keep pixel values in valid range
                   momentum3 = (0.9*momentum3) + (grad3/ (torch.norm(grad3) + 1e-8))
-                  self.adv_patch3 += self.epsilon * momentum3.sign()
-                  self.adv_patch3.clamp_(0, 1)  # Keep pixel values in valid range
+                  adv_patch3 += self.epsilon * momentum3.sign()
+                  adv_patch3.clamp_(0, 1)  # Keep pixel values in valid range
                   momentum4 = (0.9*momentum4) + (grad3/ (torch.norm(grad3) + 1e-8))
-                  self.adv_patch4 += self.epsilon * momentum4.sign()
-                  self.adv_patch4.clamp_(0, 1)  # Keep pixel values in valid range
+                  adv_patch4 += self.epsilon * momentum4.sign()
+                  adv_patch4.clamp_(0, 1)  # Keep pixel values in valid range
                 
                 # Evaluate the patch after processing this image
                 with torch.no_grad():

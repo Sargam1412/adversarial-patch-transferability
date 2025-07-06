@@ -440,7 +440,7 @@ class PatchTrainer():
                   samplecnt, 1000,
                   #self.optimizer.param_groups[0]['lr'],
                   self.epsilon,
-                  (loss1.item()+loss2.item()+loss4.item()),#+loss3.item()
+                  (loss3.item()+loss2.item()+loss4.item()),#+loss1.item()
                   mIoU,
                   str(datetime.timedelta(seconds=int(time.time() - start_time))),
                   eta_string))

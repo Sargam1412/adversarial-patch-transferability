@@ -144,6 +144,13 @@ class PatchTrainer():
       self.current_iteration = 0
       self.model_name=model_name
 
+      self.H3 = torch.load('/kaggle/working/logs/H3_pidnet_l.pt', map_location = self.device)
+      self.H2 = torch.load('/kaggle/working/logs/H2_pidnet_l.pt', map_location = self.device)
+      self.H4 = torch.load('/kaggle/working/logs/H4_pidnet_l.pt', map_location = self.device)
+      self.H3 /= torch.norm(self.H3, p=2, dim=(2,3), keepdim=True) + 1e-8 
+      self.H2 /= torch.norm(self.H2, p=2, dim=(2,3), keepdim=True) + 1e-8
+      self.H4 /= torch.norm(self.H4, p=2, dim=(2,3), keepdim=True) + 1e-8
+
       # Register hook
       if 'pidnet_s' in self.model_name:
         self.layer1_name = 'layer1.0.bn2' 
@@ -311,7 +318,7 @@ class PatchTrainer():
       
     return H2, H3, H4#, H1
 
-  def train(self, H2, H3, H4):#, H1
+  def train(self):#, H1, H2, H3, H4
     epochs, iters_per_epoch, max_iters = self.epochs, self.iters_per_epoch, self.max_iters
     # self.feature_maps_adv1 = None
     # self.feature_maps_rand1 = None
@@ -322,15 +329,15 @@ class PatchTrainer():
     self.feature_maps_adv4 = None
     self.feature_maps_rand4 = None
     # H1 /= torch.norm(H1, p=2, dim=(2,3), keepdim=True) + 1e-8 
-    H2 /= torch.norm(H2, p=2, dim=(2,3), keepdim=True) + 1e-8
-    H3 /= torch.norm(H3, p=2, dim=(2,3), keepdim=True) + 1e-8
-    H4 /= torch.norm(H4, p=2, dim=(2,3), keepdim=True) + 1e-8
+    # H2 /= torch.norm(H2, p=2, dim=(2,3), keepdim=True) + 1e-8
+    # H3 /= torch.norm(H3, p=2, dim=(2,3), keepdim=True) + 1e-8
+    # H4 /= torch.norm(H4, p=2, dim=(2,3), keepdim=True) + 1e-8
     # self.logger.info(f'H1.shape: {H1.shape}')
-    self.logger.info(f'H2.shape: {H2.shape}')
-    self.logger.info(f'H3.shape: {H3.shape}')
-    self.logger.info(f'H4.shape: {H4.shape}')
+    self.logger.info(f'H2.shape: {self.H2.shape}')
+    self.logger.info(f'H3.shape: {self.H3.shape}')
+    self.logger.info(f'H4.shape: {self.H4.shape}')
     start_time = time.time()
-    self.logger.info('Start training, Total Epochs: {:d} = Iterations per epoch {:d}'.format(epochs, iters_per_epoch))
+    self.logger.info('Start training, Total Epochs: {:d} = Iterations per epoch {:d}'.format(epochs, 1000))
     IoU = []
     for ep in range(self.start_epoch, self.end_epoch):
       self.current_epoch = ep
@@ -367,9 +374,9 @@ class PatchTrainer():
           #F = torch.zeros(( self.feature_map_shape[1], self.feature_map_shape[2]), device=self.device)
           for i in range(image.shape[0]):
             # F1 = ((self.feature_maps_adv1[i]-self.feature_maps_rand1[i])*H1[idx[i]]) + (H1[idx[i]])**2
-            F2 = ((self.feature_maps_adv2[i]-self.feature_maps_rand2[i])*H2[idx[i]]) + (H2[idx[i]])**2
-            F3 = ((self.feature_maps_adv3[i]-self.feature_maps_rand3[i])*H3[idx[i]]) + (H3[idx[i]])**2
-            F4 = ((self.feature_maps_adv4[i]-self.feature_maps_rand4[i])*H4[idx[i]]) + (H4[idx[i]])**2
+            F2 = ((self.feature_maps_adv2[i]-self.feature_maps_rand2[i])*self.H2[idx[i]]) + (self.H2[idx[i]])**2
+            F3 = ((self.feature_maps_adv3[i]-self.feature_maps_rand3[i])*self.H3[idx[i]]) + (self.H3[idx[i]])**2
+            F4 = ((self.feature_maps_adv4[i]-self.feature_maps_rand4[i])*self.H4[idx[i]]) + (self.H4[idx[i]])**2
           #plt.imshow(output.argmax(dim =1)[0].cpu().detach().numpy())
           #plt.show()
           #break

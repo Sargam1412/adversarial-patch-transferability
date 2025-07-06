@@ -1,5 +1,6 @@
 import torchvision.transforms as transforms
 import random
+import torch
 
 class Patch:
     def __init__(self,config):

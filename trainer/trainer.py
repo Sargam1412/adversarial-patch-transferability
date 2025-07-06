@@ -38,6 +38,7 @@ class PatchTrainer():
       self.patch_size = config.patch.size
       self.apply_patch = Patch(config).apply_patch
       self.apply_patch_grad = Patch(config).apply_patch_grad
+      self.apply_patch_rand = Patch(config).apply_patch_rand
       self.epsilon = config.optimizer.init_lr
 
       cityscape_train = Cityscapes(

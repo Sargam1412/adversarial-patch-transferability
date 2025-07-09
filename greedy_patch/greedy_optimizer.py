@@ -204,10 +204,10 @@ class GreedyPatchOptimizer:
                 self.logger.info("No patch path provided. Creating new random patch")
         
             # Create a new random patch if no file found or no path provided
-            patch1 = torch.load('/kaggle/working/optimized_patch1.pt', map_location = device)
-            patch2 = torch.load('/kaggle/working/optimized_patch2.pt', map_location = device)
-            patch3 = torch.load('/kaggle/working/optimized_patch3.pt', map_location = device)
-            patch4 = torch.load('/kaggle/working/optimized_patch4.pt', map_location = device)
+            patch1 = torch.load('/kaggle/working/optimized_patch1.pt', map_location = self.device)
+            patch2 = torch.load('/kaggle/working/optimized_patch2.pt', map_location = self.device)
+            patch3 = torch.load('/kaggle/working/optimized_patch3.pt', map_location = self.device)
+            patch4 = torch.load('/kaggle/working/optimized_patch4.pt', map_location = self.device)
             return patch1, patch2, patch3, patch4
 
     def compute_grad(self, image, patch1, patch2, patch3, patch4, true_label, idx):

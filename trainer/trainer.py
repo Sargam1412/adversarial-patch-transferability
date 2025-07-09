@@ -163,8 +163,14 @@ class PatchTrainer():
         self.layer4_name = 'layer5.1.relu' 
         self.feature_map4_shape = [256, 16, 16]
       elif 'pidnet_m' in self.model_name:
-        self.layer_name = 'layer3.2.bn2'
-        self.feature_map_shape = [256,64,64]
+        self.layer1_name = 'layer1.0.bn2' 
+        self.feature_map1_shape = [64, 256, 256]
+        self.layer2_name = 'layer3.2.bn2' 
+        self.feature_map2_shape = [256,64,64]
+        self.layer3_name = 'layer3_.1.bn2' 
+        self.feature_map3_shape = [128, 128, 128]
+        self.layer4_name = 'layer5.1.relu' 
+        self.feature_map4_shape = [512, 16, 16]
       elif 'pidnet_l' in self.model_name:
         self.layer1_name = 'layer1.0.bn2' 
         self.feature_map1_shape = [64, 256, 256]

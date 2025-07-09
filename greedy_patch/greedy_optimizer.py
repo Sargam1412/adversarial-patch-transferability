@@ -382,13 +382,13 @@ class GreedyPatchOptimizer:
                 #     torch.save(patch, save_path)
                 #     self.logger.info(f"Saved optimized patch to {save_path}")
             safety1 = adv_patch1.clone()
-            pickle.dump( safety1.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy1"+".p", "wb" ) )
+            pickle.dump( safety1.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_simple1"+".p", "wb" ) )
             safety2 = adv_patch2.clone()
-            pickle.dump( safety2.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy2"+".p", "wb" ) )
+            pickle.dump( safety2.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_simple2"+".p", "wb" ) )
             safety3 = adv_patch3.clone()
-            pickle.dump( safety3.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy3"+".p", "wb" ) )
+            pickle.dump( safety3.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_simple3"+".p", "wb" ) )
             safety4 = adv_patch4.clone()
-            pickle.dump( safety4.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_greedy4"+".p", "wb" ) )
+            pickle.dump( safety4.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap_simple4"+".p", "wb" ) )
             self.logger.info(f"Epoch {ep} completed")
             
         total_time = time.time() - start_time

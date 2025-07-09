@@ -180,9 +180,15 @@ class PatchTrainer():
         self.feature_map3_shape = [128, 128, 128]
         self.layer4_name = 'layer5.1.relu' 
         self.feature_map4_shape = [512, 16, 16]
-      elif 'bisenet' in self.model_name:
+      elif 'bisenet' in self.model_name: 
+        self.layer_name = 'segment.S1S2.fuse'
+        self.feature_map_shape=[16, 256, 256]
         self.layer_name = 'segment.S3.1.relu'
         self.feature_map_shape=[32,128,128]
+        self.layer_name = 'segment.S4.1.relu'
+        self.feature_map_shape=[64, 64, 64]
+        self.layer_name = 'segment.S5_4.3.relu'
+        self.feature_map_shape=[128, 32, 32]
       else:
         self.layer_name = 'pretrained.layer2.3.relu'
         self.feature_map_shape=[512,32,32]

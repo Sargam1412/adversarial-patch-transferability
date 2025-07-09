@@ -204,10 +204,10 @@ class GreedyPatchOptimizer:
                 self.logger.info("No patch path provided. Creating new random patch")
         
             # Create a new random patch if no file found or no path provided
-            patch1 = torch.load('/kaggle/working/optimized_patch1.pt', map_location = self.device)
-            patch2 = torch.load('/kaggle/working/optimized_patch2.pt', map_location = self.device)
-            patch3 = torch.load('/kaggle/working/optimized_patch3.pt', map_location = self.device)
-            patch4 = torch.load('/kaggle/working/optimized_patch4.pt', map_location = self.device)
+            patch1 = pickle.load(open(/kaggle/working/pidnet_l_bbfa_modifiedloss_amap_simple1.p, "rb")).to(self.device)
+            patch2 = pickle.load(open(/kaggle/working/pidnet_l_bbfa_modifiedloss_amap_simple2.p, "rb")).to(self.device)
+            patch3 = pickle.load(open(/kaggle/working/pidnet_l_bbfa_modifiedloss_amap_simple3.p, "rb")).to(self.device)
+            patch4 = pickle.load(open(/kaggle/working/pidnet_l_bbfa_modifiedloss_amap_simple4.p, "rb")).to(self.device)
             return patch1, patch2, patch3, patch4
 
     def compute_grad(self, image, patch1, patch2, patch3, patch4, true_label, idx):
@@ -339,7 +339,7 @@ class GreedyPatchOptimizer:
         IoU = []
         
         # Process a subset of images
-        for ep in range(60):
+        for ep in range(26):
             for i_iter, batch in enumerate(self.train_dataloader):
                 if i_iter >= num_images:
                     break

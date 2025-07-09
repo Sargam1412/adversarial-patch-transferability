@@ -339,7 +339,7 @@ class GreedyPatchOptimizer:
         IoU = []
         
         # Process a subset of images
-        for ep in range(30):
+        for ep in range(60):
             for i_iter, batch in enumerate(self.train_dataloader):
                 if i_iter >= num_images:
                     break

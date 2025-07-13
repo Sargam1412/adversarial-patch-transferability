@@ -75,10 +75,10 @@ class GreedyPatchOptimizer:
         # Patch adjustment parameters
         self.delta = 2/255  # The adjustment step size (+2/255, 0, -2/255)
         
-        self.H3 = torch.load('/kaggle/working/logs/H3_pidnet_l.pt', map_location = self.device)
-        self.H2 = torch.load('/kaggle/working/logs/H2_pidnet_l.pt', map_location = self.device)
-        self.H4 = torch.load('/kaggle/working/logs/H4_pidnet_l.pt', map_location = self.device)
-        self.H3 /= torch.norm(self.H3, p=2, dim=(2,3), keepdim=True) + 1e-8 
+        self.H1 = torch.load('/kaggle/working/logs/H1_pidnet_s.pt', map_location = self.device)
+        self.H2 = torch.load('/kaggle/working/logs/H2_pidnet_s.pt', map_location = self.device)
+        self.H4 = torch.load('/kaggle/working/logs/H4_pidnet_s.pt', map_location = self.device)
+        self.H1 /= torch.norm(self.H1, p=2, dim=(2,3), keepdim=True) + 1e-8 
         self.H2 /= torch.norm(self.H2, p=2, dim=(2,3), keepdim=True) + 1e-8
         self.H4 /= torch.norm(self.H4, p=2, dim=(2,3), keepdim=True) + 1e-8
 
@@ -143,23 +143,23 @@ class GreedyPatchOptimizer:
 
     def register_forward_hook1(self):
       for name, module in self.model1.model.named_modules():
-        # if name == self.layer1_name:
-        #   module.register_forward_hook(self.hook1)
+        if name == self.layer1_name:
+          module.register_forward_hook(self.hook1)
         if name == self.layer2_name:
           module.register_forward_hook(self.hook12)
-        if name == self.layer3_name:
-          module.register_forward_hook(self.hook13)
+        # if name == self.layer3_name:
+        #   module.register_forward_hook(self.hook13)
         if name == self.layer4_name:
           module.register_forward_hook(self.hook14)
 
     def register_forward_hook2(self):
       for name, module in self.model2.model.named_modules():
-        # if name == self.layer1_name:
-        #   module.register_forward_hook(self.hook2)
+        if name == self.layer1_name:
+          module.register_forward_hook(self.hook2)
         if name == self.layer2_name:
           module.register_forward_hook(self.hook22)
-        if name == self.layer3_name:
-          module.register_forward_hook(self.hook23)
+        # if name == self.layer3_name:
+        #   module.register_forward_hook(self.hook23)
         if name == self.layer4_name:
           module.register_forward_hook(self.hook24)
 
@@ -254,7 +254,7 @@ class GreedyPatchOptimizer:
         # correct_pixels = (pred_labels == patched_label) & (patched_label != self.config.train.ignore_label)
         # num_correct = correct_pixels.sum().item()
         for i in range(image.shape[0]):
-            F3 = ((self.feature_maps_adv3[i]-self.feature_maps_rand3[i])*self.H3[idx[i]]) + (self.H3[idx[i]])**2
+            F1 = ((self.feature_maps_adv1[i]-self.feature_maps_rand1[i])*self.H1[idx[i]]) + (self.H1[idx[i]])**2
             F2 = ((self.feature_maps_adv2[i]-self.feature_maps_rand2[i])*self.H2[idx[i]]) + (self.H2[idx[i]])**2
             F4 = ((self.feature_maps_adv4[i]-self.feature_maps_rand4[i])*self.H4[idx[i]]) + (self.H4[idx[i]])**2
         # if num_correct > 0:
@@ -262,13 +262,13 @@ class GreedyPatchOptimizer:
         # else:
         #     loss = self.criterion.compute_loss_transegpgd_stage2(output, patched_label, clean_output)
         
-        #loss1 = self.criterion.compute_trainloss(F1)
+        loss1 = self.criterion.compute_trainloss(F1)
         loss2 = self.criterion.compute_trainloss(F2)
-        loss3 = self.criterion.compute_trainloss(F3)
+        # loss3 = self.criterion.compute_trainloss(F3)
         loss4 = self.criterion.compute_trainloss(F4)
         #loss = self.criterion.compute_loss_direct(output, patched_label)
         #total_loss += (loss1.item() + loss2.item() + loss4.item())# + loss3.item()
-        grad1 = torch.autograd.grad(loss3, patch_with_grad1, retain_graph=True)[0]
+        grad1 = torch.autograd.grad(loss1, patch_with_grad1, retain_graph=True)[0]
         grad2 = torch.autograd.grad(loss2, patch_with_grad2, retain_graph=True)[0]
         grad3 = torch.autograd.grad(loss2, patch_with_grad3, retain_graph=True)[0]
         grad4 = torch.autograd.grad(loss4, patch_with_grad4, retain_graph=True)[0]
@@ -339,7 +339,7 @@ class GreedyPatchOptimizer:
         IoU = []
         
         # Process a subset of images
-        for ep in range(26):
+        for ep in range(30):
             for i_iter, batch in enumerate(self.train_dataloader):
                 if i_iter >= num_images:
                     break

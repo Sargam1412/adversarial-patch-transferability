@@ -145,10 +145,10 @@ class PatchTrainer():
       self.current_iteration = 0
       self.model_name=model_name
 
-      self.H3 = torch.load('/kaggle/working/logs/H3_pidnet_l.pt', map_location = self.device)
-      self.H2 = torch.load('/kaggle/working/logs/H2_pidnet_l.pt', map_location = self.device)
-      self.H4 = torch.load('/kaggle/working/logs/H4_pidnet_l.pt', map_location = self.device)
-      self.H3 /= torch.norm(self.H3, p=2, dim=(2,3), keepdim=True) + 1e-8 
+      self.H1 = torch.load('/kaggle/working/logs/H1_pidnet_s.pt', map_location = self.device)
+      self.H2 = torch.load('/kaggle/working/logs/H2_pidnet_s.pt', map_location = self.device)
+      self.H4 = torch.load('/kaggle/working/logs/H4_pidnet_s.pt', map_location = self.device)
+      self.H1 /= torch.norm(self.H1, p=2, dim=(2,3), keepdim=True) + 1e-8 
       self.H2 /= torch.norm(self.H2, p=2, dim=(2,3), keepdim=True) + 1e-8
       self.H4 /= torch.norm(self.H4, p=2, dim=(2,3), keepdim=True) + 1e-8
 
@@ -237,32 +237,32 @@ class PatchTrainer():
 
   def register_forward_hook1(self):
     for name, module in self.model1.model.named_modules():
-        # if name == self.layer1_name:
-        #   module.register_forward_hook(self.hook1)
+        if name == self.layer1_name:
+          module.register_forward_hook(self.hook1)
         if name == self.layer2_name:
           module.register_forward_hook(self.hook12)
-        if name == self.layer3_name:
-          module.register_forward_hook(self.hook13)
+        # if name == self.layer3_name:
+        #   module.register_forward_hook(self.hook13)
         if name == self.layer4_name:
           module.register_forward_hook(self.hook14)
 
   def register_forward_hook2(self):
     for name, module in self.model2.model.named_modules():
-        # if name == self.layer1_name:
-        #   module.register_forward_hook(self.hook2)
+        if name == self.layer1_name:
+          module.register_forward_hook(self.hook2)
         if name == self.layer2_name:
           module.register_forward_hook(self.hook22)
-        if name == self.layer3_name:
-          module.register_forward_hook(self.hook23)
+        # if name == self.layer3_name:
+        #   module.register_forward_hook(self.hook23)
         if name == self.layer4_name:
           module.register_forward_hook(self.hook24)
           
   
   def get_agg_gradient(self):
     self.feature_maps = None
-    #H1 = torch.zeros((1000, self.feature_map1_shape[0], self.feature_map1_shape[1], self.feature_map1_shape[2]), device=self.device)  # Aggregate gradient
+    H1 = torch.zeros((1000, self.feature_map1_shape[0], self.feature_map1_shape[1], self.feature_map1_shape[2]), device=self.device)  # Aggregate gradient
     H2 = torch.zeros((1000, self.feature_map2_shape[0], self.feature_map2_shape[1], self.feature_map2_shape[2]), device=self.device)
-    H3 = torch.zeros((1000, self.feature_map3_shape[0], self.feature_map3_shape[1], self.feature_map3_shape[2]), device=self.device)
+    # H3 = torch.zeros((1000, self.feature_map3_shape[0], self.feature_map3_shape[1], self.feature_map3_shape[2]), device=self.device)
     H4 = torch.zeros((1000, self.feature_map4_shape[0], self.feature_map4_shape[1], self.feature_map4_shape[2]), device=self.device)
     for epoch in range(30):
       self.logger.info(f"\nStarting gradient epoch {epoch+1}/30...")
@@ -288,23 +288,23 @@ class PatchTrainer():
           with torch.no_grad():
               self.adv_patch += self.epsilon * self.adv_patch.grad.data.sign()
               self.adv_patch.clamp_(0, 1)  # Keep pixel values in valid range
-          #grad_feature_map1 = self.feature_maps_adv1.grad  # Only works if feature_maps.requires_grad=True
+          grad_feature_map1 = self.feature_maps_adv1.grad  # Only works if feature_maps.requires_grad=True
           grad_feature_map2 = self.feature_maps_adv2.grad
-          grad_feature_map3 = self.feature_maps_adv3.grad
+          #grad_feature_map3 = self.feature_maps_adv3.grad
           grad_feature_map4 = self.feature_maps_adv4.grad
           
           # If not requires_grad, use autograd.grad instead
-          # if grad_feature_map1 is None:
-          #     print("grad_feature_map1 is None")
-          #     grad_feature_map1 = torch.autograd.grad(loss, self.feature_maps_adv1, retain_graph=True)[0]
+          if grad_feature_map1 is None:
+              print("grad_feature_map1 is None")
+              grad_feature_map1 = torch.autograd.grad(loss, self.feature_maps_adv1, retain_graph=True)[0]
 
           if grad_feature_map2 is None:
               print("grad_feature_map2 is None")
               grad_feature_map2 = torch.autograd.grad(loss, self.feature_maps_adv2, retain_graph=True)[0]
 
-          if grad_feature_map3 is None:
-              print("grad_feature_map3 is None")
-              grad_feature_map3 = torch.autograd.grad(loss, self.feature_maps_adv3, retain_graph=True)[0]
+          # if grad_feature_map3 is None:
+          #     print("grad_feature_map3 is None")
+          #     grad_feature_map3 = torch.autograd.grad(loss, self.feature_maps_adv3, retain_graph=True)[0]
 
           if grad_feature_map4 is None:
               print("grad_feature_map4 is None")
@@ -313,9 +313,9 @@ class PatchTrainer():
           # 5. Normalize and aggregate
           # grad_feature_map /= torch.norm(grad_feature_map, p=2, dim=(1,2,3), keepdim=True) + 1e-8
           for i in range(image.shape[0]):
-            #H1[idx[i]] = grad_feature_map1[i] if H1[idx[i]] is None else H1[idx[i]] + grad_feature_map1[i].detach()
+            H1[idx[i]] = grad_feature_map1[i] if H1[idx[i]] is None else H1[idx[i]] + grad_feature_map1[i].detach()
             H2[idx[i]] = grad_feature_map2[i] if H2[idx[i]] is None else H2[idx[i]] + grad_feature_map2[i].detach()
-            H3[idx[i]] = grad_feature_map3[i] if H3[idx[i]] is None else H3[idx[i]] + grad_feature_map3[i].detach()
+            #H3[idx[i]] = grad_feature_map3[i] if H3[idx[i]] is None else H3[idx[i]] + grad_feature_map3[i].detach()
             H4[idx[i]] = grad_feature_map4[i] if H4[idx[i]] is None else H4[idx[i]] + grad_feature_map4[i].detach()
           self.logger.info(f" Sample number: {i_iter+1}/1000")
           # Optional: delete big tensors
@@ -323,18 +323,18 @@ class PatchTrainer():
           torch.cuda.empty_cache()
       path='/kaggle/working/logs/H2_pidnet_l.pt'
       torch.save(H2,path)
-      path='/kaggle/working/logs/H3_pidnet_l.pt'
-      torch.save(H3,path)
+      path='/kaggle/working/logs/H1_pidnet_l.pt'
+      torch.save(H1,path)
       path='/kaggle/working/logs/H4_pidnet_l.pt'
       torch.save(H4,path)
   
       
-    return H2, H3, H4#, H1
+    return H1, H2, H4#, H3
 
   def train(self):#, H1, H2, H3, H4
     epochs, iters_per_epoch, max_iters = self.epochs, self.iters_per_epoch, self.max_iters
-    # self.feature_maps_adv1 = None
-    # self.feature_maps_rand1 = None
+    self.feature_maps_adv1 = None
+    self.feature_maps_rand1 = None
     self.feature_maps_adv2 = None
     self.feature_maps_rand2 = None
     self.feature_maps_adv3 = None
@@ -346,8 +346,8 @@ class PatchTrainer():
     # H3 /= torch.norm(H3, p=2, dim=(2,3), keepdim=True) + 1e-8
     # H4 /= torch.norm(H4, p=2, dim=(2,3), keepdim=True) + 1e-8
     # self.logger.info(f'H1.shape: {H1.shape}')
+    self.logger.info(f'H1.shape: {self.H1.shape}')
     self.logger.info(f'H2.shape: {self.H2.shape}')
-    self.logger.info(f'H3.shape: {self.H3.shape}')
     self.logger.info(f'H4.shape: {self.H4.shape}')
     start_time = time.time()
     self.logger.info('Start training, Total Epochs: {:d} = Iterations per epoch {:d}'.format(epochs, 1000))
@@ -386,21 +386,21 @@ class PatchTrainer():
           output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
           #F = torch.zeros(( self.feature_map_shape[1], self.feature_map_shape[2]), device=self.device)
           for i in range(image.shape[0]):
-            # F1 = ((self.feature_maps_adv1[i]-self.feature_maps_rand1[i])*H1[idx[i]]) + (H1[idx[i]])**2
+            F1 = ((self.feature_maps_adv1[i]-self.feature_maps_rand1[i])*H1[idx[i]]) + (H1[idx[i]])**2
             F2 = ((self.feature_maps_adv2[i]-self.feature_maps_rand2[i])*self.H2[idx[i]]) + (self.H2[idx[i]])**2
-            F3 = ((self.feature_maps_adv3[i]-self.feature_maps_rand3[i])*self.H3[idx[i]]) + (self.H3[idx[i]])**2
+            # F3 = ((self.feature_maps_adv3[i]-self.feature_maps_rand3[i])*self.H3[idx[i]]) + (self.H3[idx[i]])**2
             F4 = ((self.feature_maps_adv4[i]-self.feature_maps_rand4[i])*self.H4[idx[i]]) + (self.H4[idx[i]])**2
           #plt.imshow(output.argmax(dim =1)[0].cpu().detach().numpy())
           #plt.show()
           #break
 
           # Compute adaptive loss
-          # loss1 = self.criterion.compute_trainloss(F1)
+          loss1 = self.criterion.compute_trainloss(F1)
           loss2 = self.criterion.compute_trainloss(F2)
-          loss3 = self.criterion.compute_trainloss(F3)
+          # loss3 = self.criterion.compute_trainloss(F3)
           loss4 = self.criterion.compute_trainloss(F4)
           #loss = self.criterion.compute_loss_direct(output, patched_label)
-          total_loss += (loss3.item() + loss2.item() + loss4.item())# + loss1.item()
+          total_loss += (loss1.item() + loss2.item() + loss4.item())# + loss3.item()
           #break
 
           ## metrics
@@ -422,7 +422,7 @@ class PatchTrainer():
           # loss2.backward()
           # loss3.backward()
           # loss4.backward()
-          grad1 = torch.autograd.grad(loss3, self.adv_patch1, retain_graph=True)[0]
+          grad1 = torch.autograd.grad(loss1, self.adv_patch1, retain_graph=True)[0]
           grad2 = torch.autograd.grad(loss2, self.adv_patch2, retain_graph=True)[0]
           grad3 = torch.autograd.grad(loss2, self.adv_patch3, retain_graph=True)[0]
           grad4 = torch.autograd.grad(loss4, self.adv_patch4, retain_graph=True)[0]
@@ -460,7 +460,7 @@ class PatchTrainer():
                   samplecnt, 1000,
                   #self.optimizer.param_groups[0]['lr'],
                   self.epsilon,
-                  (loss3.item()+loss2.item()+loss4.item()),#+loss1.item()
+                  (loss1.item()+loss2.item()+loss4.item()),#+loss3.item()
                   mIoU,
                   str(datetime.timedelta(seconds=int(time.time() - start_time))),
                   eta_string))

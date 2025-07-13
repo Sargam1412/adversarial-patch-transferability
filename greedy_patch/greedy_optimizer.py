@@ -352,18 +352,189 @@ class GreedyPatchOptimizer:
                 # Compute priority map for this image
                 grad1, grad2, grad3, grad4 = self.compute_grad(image, adv_patch1, adv_patch2, adv_patch3, adv_patch4, true_label, index)
                 with torch.no_grad():
-                  momentum1 = (0.9*momentum1) + (grad1/ (torch.norm(grad1) + 1e-8))
-                  adv_patch1 += 0.005 * momentum1.sign()
-                  adv_patch1.clamp_(0, 1)  # Keep pixel values in valid range
-                  momentum2 = (0.9*momentum2) + (grad2/ (torch.norm(grad2) + 1e-8))
-                  adv_patch2 += 0.005 * momentum2.sign()
-                  adv_patch2.clamp_(0, 1)  # Keep pixel values in valid range
-                  momentum3 = (0.9*momentum3) + (grad3/ (torch.norm(grad3) + 1e-8))
-                  adv_patch3 += 0.005 * momentum3.sign()
-                  adv_patch3.clamp_(0, 1)  # Keep pixel values in valid range
-                  momentum4 = (0.9*momentum4) + (grad3/ (torch.norm(grad3) + 1e-8))
-                  adv_patch4 += 0.005 * momentum4.sign()
-                  adv_patch4.clamp_(0, 1)  # Keep pixel values in valid range
+                    # For adv_patch1
+                    # Flatten the priority map and get indices sorted by priority (highest to lowest)
+                    flat_priorities = priority_map1.view(-1)
+                    sorted_indices = torch.argsort(flat_priorities, descending=True)
+                    
+                    # Convert flat indices to 2D coordinates
+                    h, w = priority_map1.shape
+                    y_coords = sorted_indices // w
+                    x_coords = sorted_indices % w
+                    
+                    # Process pixels in order of priority
+                    for idx in range(50):
+                        y, x = y_coords[idx].item(), x_coords[idx].item()
+                        
+                        # Try different adjustments for each channel
+                        best_score = float('-inf')
+                        best_adjustment = torch.zeros(3, device=self.device)
+                        
+                        for c in range(3):  # For each color channel
+                            for adj in [-self.delta, 0, self.delta]:
+                                # Create a temporary patch with this adjustment
+                                temp_patch = adv_patch1.clone()
+                                temp_patch[c, y, x] += adj
+                                temp_patch.clamp_(0, 1)  # Keep in valid range
+                                
+                                # Evaluate this adjustment
+                                score = self.evaluate_patch(image, temp_patch, adv_patch2, adv_patch3, adv_patch4, true_label)
+                                
+                                if score > best_score:
+                                    best_score = score
+                                    best_adjustment[c] = adj
+                        
+                        # Apply the best adjustment to the patch
+                        for c in range(3):
+                            adv_patch1[c, y, x] += best_adjustment[c]
+                        
+                        # Ensure patch values stay in valid range
+                        adv_patch1.clamp_(0, 1)
+                        
+                        # Log progress periodically
+                        if idx % 10 == 0:
+                            self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch1")
+        
+                    # For adv_patch2
+                    # Flatten the priority map and get indices sorted by priority (highest to lowest)
+                    flat_priorities = priority_map2.view(-1)
+                    sorted_indices = torch.argsort(flat_priorities, descending=True)
+                    
+                    # Convert flat indices to 2D coordinates
+                    h, w = priority_map2.shape
+                    y_coords = sorted_indices // w
+                    x_coords = sorted_indices % w
+                    
+                    # Process pixels in order of priority
+                    for idx in range(50):
+                        y, x = y_coords[idx].item(), x_coords[idx].item()
+                        
+                        # Try different adjustments for each channel
+                        best_score = float('-inf')
+                        best_adjustment = torch.zeros(3, device=self.device)
+                        
+                        for c in range(3):  # For each color channel
+                            for adj in [-self.delta, 0, self.delta]:
+                                # Create a temporary patch with this adjustment
+                                temp_patch = adv_patch2.clone()
+                                temp_patch[c, y, x] += adj
+                                temp_patch.clamp_(0, 1)  # Keep in valid range
+                                
+                                # Evaluate this adjustment
+                                score = self.evaluate_patch(image, adv_patch1, temp_patch, adv_patch3, adv_patch4, true_label)
+                                
+                                if score > best_score:
+                                    best_score = score
+                                    best_adjustment[c] = adj
+                        
+                        # Apply the best adjustment to the patch
+                        for c in range(3):
+                            adv_patch2[c, y, x] += best_adjustment[c]
+                        
+                        # Ensure patch values stay in valid range
+                        adv_patch2.clamp_(0, 1)
+                        
+                        # Log progress periodically
+                        if idx % 10 == 0:
+                            self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch2")
+        
+                    # For adv_patch3
+                    # Flatten the priority map and get indices sorted by priority (highest to lowest)
+                    flat_priorities = priority_map3.view(-1)
+                    sorted_indices = torch.argsort(flat_priorities, descending=True)
+                    
+                    # Convert flat indices to 2D coordinates
+                    h, w = priority_map3.shape
+                    y_coords = sorted_indices // w
+                    x_coords = sorted_indices % w
+                    
+                    # Process pixels in order of priority
+                    for idx in range(50):
+                        y, x = y_coords[idx].item(), x_coords[idx].item()
+                        
+                        # Try different adjustments for each channel
+                        best_score = float('-inf')
+                        best_adjustment = torch.zeros(3, device=self.device)
+                        
+                        for c in range(3):  # For each color channel
+                            for adj in [-self.delta, 0, self.delta]:
+                                # Create a temporary patch with this adjustment
+                                temp_patch = adv_patch3.clone()
+                                temp_patch[c, y, x] += adj
+                                temp_patch.clamp_(0, 1)  # Keep in valid range
+                                
+                                # Evaluate this adjustment
+                                score = self.evaluate_patch(image, adv_patch1, adv_patch2, temp_patch, adv_patch4, true_label)
+                                
+                                if score > best_score:
+                                    best_score = score
+                                    best_adjustment[c] = adj
+                        
+                        # Apply the best adjustment to the patch
+                        for c in range(3):
+                            adv_patch3[c, y, x] += best_adjustment[c]
+                        
+                        # Ensure patch values stay in valid range
+                        adv_patch3.clamp_(0, 1)
+                        
+                        # Log progress periodically
+                        if idx % 10 == 0:
+                            self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch3")
+        
+                    # For adv_patch4
+                    # Flatten the priority map and get indices sorted by priority (highest to lowest)
+                    flat_priorities = priority_map4.view(-1)
+                    sorted_indices = torch.argsort(flat_priorities, descending=True)
+                    
+                    # Convert flat indices to 2D coordinates
+                    h, w = priority_map4.shape
+                    y_coords = sorted_indices // w
+                    x_coords = sorted_indices % w
+                    
+                    # Process pixels in order of priority
+                    for idx in range(50):
+                        y, x = y_coords[idx].item(), x_coords[idx].item()
+                        
+                        # Try different adjustments for each channel
+                        best_score = float('-inf')
+                        best_adjustment = torch.zeros(3, device=self.device)
+                        
+                        for c in range(3):  # For each color channel
+                            for adj in [-self.delta, 0, self.delta]:
+                                # Create a temporary patch with this adjustment
+                                temp_patch = adv_patch4.clone()
+                                temp_patch[c, y, x] += adj
+                                temp_patch.clamp_(0, 1)  # Keep in valid range
+                                
+                                # Evaluate this adjustment
+                                score = self.evaluate_patch(image, adv_patch1, adv_patch2, adv_patch3, temp_patch, true_label)
+                                
+                                if score > best_score:
+                                    best_score = score
+                                    best_adjustment[c] = adj
+                        
+                        # Apply the best adjustment to the patch
+                        for c in range(3):
+                            adv_patch4[c, y, x] += best_adjustment[c]
+                        
+                        # Ensure patch values stay in valid range
+                        adv_patch4.clamp_(0, 1)
+                        
+                        # Log progress periodically
+                        if idx % 10 == 0:
+                            self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch4")
+                  # momentum1 = (0.9*momentum1) + (grad1/ (torch.norm(grad1) + 1e-8))
+                  # adv_patch1 += 0.005 * momentum1.sign()
+                  # adv_patch1.clamp_(0, 1)  # Keep pixel values in valid range
+                  # momentum2 = (0.9*momentum2) + (grad2/ (torch.norm(grad2) + 1e-8))
+                  # adv_patch2 += 0.005 * momentum2.sign()
+                  # adv_patch2.clamp_(0, 1)  # Keep pixel values in valid range
+                  # momentum3 = (0.9*momentum3) + (grad3/ (torch.norm(grad3) + 1e-8))
+                  # adv_patch3 += 0.005 * momentum3.sign()
+                  # adv_patch3.clamp_(0, 1)  # Keep pixel values in valid range
+                  # momentum4 = (0.9*momentum4) + (grad3/ (torch.norm(grad3) + 1e-8))
+                  # adv_patch4 += 0.005 * momentum4.sign()
+                  # adv_patch4.clamp_(0, 1)  # Keep pixel values in valid range
                 
                 # Evaluate the patch after processing this image
                 with torch.no_grad():
@@ -396,174 +567,4 @@ class GreedyPatchOptimizer:
         
         return adv_patch1.detach(), adv_patch2.detach(), adv_patch3.detach(), adv_patch4.detach(), np.array(IoU)
 
-# # For adv_patch1
-#             # Flatten the priority map and get indices sorted by priority (highest to lowest)
-#             flat_priorities = priority_map1.view(-1)
-#             sorted_indices = torch.argsort(flat_priorities, descending=True)
-            
-#             # Convert flat indices to 2D coordinates
-#             h, w = priority_map1.shape
-#             y_coords = sorted_indices // w
-#             x_coords = sorted_indices % w
-            
-#             # Process pixels in order of priority
-#             for idx in range(50):
-#                 y, x = y_coords[idx].item(), x_coords[idx].item()
-                
-#                 # Try different adjustments for each channel
-#                 best_score = float('-inf')
-#                 best_adjustment = torch.zeros(3, device=self.device)
-                
-#                 for c in range(3):  # For each color channel
-#                     for adj in [-self.delta, 0, self.delta]:
-#                         # Create a temporary patch with this adjustment
-#                         temp_patch = adv_patch1.clone()
-#                         temp_patch[c, y, x] += adj
-#                         temp_patch.clamp_(0, 1)  # Keep in valid range
-                        
-#                         # Evaluate this adjustment
-#                         score = self.evaluate_patch(image, temp_patch, adv_patch2, adv_patch3, adv_patch4, true_label)
-                        
-#                         if score > best_score:
-#                             best_score = score
-#                             best_adjustment[c] = adj
-                
-#                 # Apply the best adjustment to the patch
-#                 for c in range(3):
-#                     adv_patch1[c, y, x] += best_adjustment[c]
-                
-#                 # Ensure patch values stay in valid range
-#                 adv_patch1.clamp_(0, 1)
-                
-#                 # Log progress periodically
-#                 if idx % 10 == 0:
-#                     self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch1")
 
-#             # For adv_patch2
-#             # Flatten the priority map and get indices sorted by priority (highest to lowest)
-#             flat_priorities = priority_map2.view(-1)
-#             sorted_indices = torch.argsort(flat_priorities, descending=True)
-            
-#             # Convert flat indices to 2D coordinates
-#             h, w = priority_map2.shape
-#             y_coords = sorted_indices // w
-#             x_coords = sorted_indices % w
-            
-#             # Process pixels in order of priority
-#             for idx in range(50):
-#                 y, x = y_coords[idx].item(), x_coords[idx].item()
-                
-#                 # Try different adjustments for each channel
-#                 best_score = float('-inf')
-#                 best_adjustment = torch.zeros(3, device=self.device)
-                
-#                 for c in range(3):  # For each color channel
-#                     for adj in [-self.delta, 0, self.delta]:
-#                         # Create a temporary patch with this adjustment
-#                         temp_patch = adv_patch2.clone()
-#                         temp_patch[c, y, x] += adj
-#                         temp_patch.clamp_(0, 1)  # Keep in valid range
-                        
-#                         # Evaluate this adjustment
-#                         score = self.evaluate_patch(image, adv_patch1, temp_patch, adv_patch3, adv_patch4, true_label)
-                        
-#                         if score > best_score:
-#                             best_score = score
-#                             best_adjustment[c] = adj
-                
-#                 # Apply the best adjustment to the patch
-#                 for c in range(3):
-#                     adv_patch2[c, y, x] += best_adjustment[c]
-                
-#                 # Ensure patch values stay in valid range
-#                 adv_patch2.clamp_(0, 1)
-                
-#                 # Log progress periodically
-#                 if idx % 10 == 0:
-#                     self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch2")
-
-#             # For adv_patch3
-#             # Flatten the priority map and get indices sorted by priority (highest to lowest)
-#             flat_priorities = priority_map3.view(-1)
-#             sorted_indices = torch.argsort(flat_priorities, descending=True)
-            
-#             # Convert flat indices to 2D coordinates
-#             h, w = priority_map3.shape
-#             y_coords = sorted_indices // w
-#             x_coords = sorted_indices % w
-            
-#             # Process pixels in order of priority
-#             for idx in range(50):
-#                 y, x = y_coords[idx].item(), x_coords[idx].item()
-                
-#                 # Try different adjustments for each channel
-#                 best_score = float('-inf')
-#                 best_adjustment = torch.zeros(3, device=self.device)
-                
-#                 for c in range(3):  # For each color channel
-#                     for adj in [-self.delta, 0, self.delta]:
-#                         # Create a temporary patch with this adjustment
-#                         temp_patch = adv_patch3.clone()
-#                         temp_patch[c, y, x] += adj
-#                         temp_patch.clamp_(0, 1)  # Keep in valid range
-                        
-#                         # Evaluate this adjustment
-#                         score = self.evaluate_patch(image, adv_patch1, adv_patch2, temp_patch, adv_patch4, true_label)
-                        
-#                         if score > best_score:
-#                             best_score = score
-#                             best_adjustment[c] = adj
-                
-#                 # Apply the best adjustment to the patch
-#                 for c in range(3):
-#                     adv_patch3[c, y, x] += best_adjustment[c]
-                
-#                 # Ensure patch values stay in valid range
-#                 adv_patch3.clamp_(0, 1)
-                
-#                 # Log progress periodically
-#                 if idx % 10 == 0:
-#                     self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch3")
-
-#             # For adv_patch4
-#             # Flatten the priority map and get indices sorted by priority (highest to lowest)
-#             flat_priorities = priority_map4.view(-1)
-#             sorted_indices = torch.argsort(flat_priorities, descending=True)
-            
-#             # Convert flat indices to 2D coordinates
-#             h, w = priority_map4.shape
-#             y_coords = sorted_indices // w
-#             x_coords = sorted_indices % w
-            
-#             # Process pixels in order of priority
-#             for idx in range(50):
-#                 y, x = y_coords[idx].item(), x_coords[idx].item()
-                
-#                 # Try different adjustments for each channel
-#                 best_score = float('-inf')
-#                 best_adjustment = torch.zeros(3, device=self.device)
-                
-#                 for c in range(3):  # For each color channel
-#                     for adj in [-self.delta, 0, self.delta]:
-#                         # Create a temporary patch with this adjustment
-#                         temp_patch = adv_patch4.clone()
-#                         temp_patch[c, y, x] += adj
-#                         temp_patch.clamp_(0, 1)  # Keep in valid range
-                        
-#                         # Evaluate this adjustment
-#                         score = self.evaluate_patch(image, adv_patch1, adv_patch2, adv_patch3, temp_patch, true_label)
-                        
-#                         if score > best_score:
-#                             best_score = score
-#                             best_adjustment[c] = adj
-                
-#                 # Apply the best adjustment to the patch
-#                 for c in range(3):
-#                     adv_patch4[c, y, x] += best_adjustment[c]
-                
-#                 # Ensure patch values stay in valid range
-#                 adv_patch4.clamp_(0, 1)
-                
-#                 # Log progress periodically
-#                 if idx % 10 == 0:
-#                     self.logger.info(f"Processed {idx}/{len(sorted_indices)} pixels for patch4")

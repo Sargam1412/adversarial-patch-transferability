@@ -201,7 +201,7 @@ class PatchTrainer():
       self.feature_maps_rand2 = None
       self.feature_maps_rand3 = None
       self.feature_maps_rand4 = None
-      self.target_ft = target_ft
+      self.target_ft = target_ft.to(self.device)
     
   # Hook to store feature map
   def hook1(self, module, input, output):

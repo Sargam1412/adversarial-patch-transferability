@@ -89,6 +89,17 @@ class PatchLoss(nn.Module):
         loss = F.sum()
         return loss
 
+    def compute_target_trainloss(self, F,output, label):
+        """
+        Compute the adaptive loss function
+        """
+        # Final adaptive loss
+        l2_norm = torch.sum(F**2)
+        ce = nn.CrossEntropyLoss(ignore_index=self.config.train.ignore_label)
+        ce_loss = ce(output, label.long())
+        loss = 0.9*l2_norm + ce_loss
+        return loss
+
     def compute_loss_direct(self, model_output, label):
         """
         Compute the adaptive loss function

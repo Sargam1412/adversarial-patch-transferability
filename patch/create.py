@@ -36,7 +36,7 @@ class Patch:
         x_end, y_end = x + self.patch_size, y + self.patch_size
         transformed_patch = patch
         patched_image[:,:, y:y_end, x:x_end] = transformed_patch
-        patched_label[:, y:y_end, x:x_end] = self.config.train.ignore_label
+        patched_label[:, y:y_end, x:x_end] = 10
         return patched_image, patched_label
 
     def apply_patch(self, image, label, patch1, patch2, patch3, patch4):#

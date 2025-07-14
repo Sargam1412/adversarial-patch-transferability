@@ -319,7 +319,7 @@ class PatchTrainer():
   
             # Compute adaptive loss
             # loss1 = self.criterion.compute_trainloss(F1)
-            loss2 = self.criterion.compute_target_trainloss(F2, output1)
+            loss2 = self.criterion.compute_target_trainloss(F2, output1, true_label)
             # loss3 = self.criterion.compute_trainloss(F3)
             # loss4 = self.criterion.compute_trainloss(F4)
             #loss = self.criterion.compute_loss_direct(output, patched_label)

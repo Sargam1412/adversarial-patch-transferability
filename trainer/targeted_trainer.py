@@ -277,12 +277,11 @@ class PatchTrainer():
     self.logger.info('Start training, Total Epochs: {:d} = Iterations per epoch {:d}'.format(epochs, 1000))
     IoU = []
     for i_iter, batch in enumerate(self.train_dataloader, 0):
+      samplecnt = 0
       if i_iter==0:
         samplecnt += batch[0].shape[0]
         image, true_label,_, _, _, idx = batch
         image, true_label = image.to(self.device), true_label.to(self.device)
-        total_loss = 0
-        samplecnt = 0
         momentum1 = torch.tensor(0, dtype=torch.float32).to(self.device)
         # momentum2 = torch.tensor(0, dtype=torch.float32).to(self.device)
         # momentum3 = torch.tensor(0, dtype=torch.float32).to(self.device)

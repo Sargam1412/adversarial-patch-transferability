@@ -355,7 +355,7 @@ class PatchTrainer():
                 #self.patch += self.epsilon * self.patch.grad.sign()  # Update patch using FGSM-style ascent
                 #norm_grad1 = grad1/ (torch.norm(grad1) + 1e-8)
                 momentum1 = (0.9*momentum1) + (grad/ (torch.norm(grad) + 1e-8))
-                self.adv_patch += self.epsilon * momentum1.sign()
+                self.adv_patch -= self.epsilon * momentum1.sign()
                 #self.patch += self.epsilon * self.patch.grad.data.sign()
                 self.adv_patch.clamp_(0, 1)  # Keep pixel values in valid range
                 #norm_grad2 = grad2/ (torch.norm(grad2) + 1e-8)
@@ -392,7 +392,7 @@ class PatchTrainer():
                       
 
             average_pixAcc, average_mIoU = self.metric.get()
-            average_loss = total_loss/1000
+            average_loss = loss2.item()
             self.logger.info('-------------------------------------------------------------------------------------------------')
             self.logger.info("Epochs: {:d}/{:d}, Average loss: {:.3f}, Average mIoU: {:.3f}, Average pixAcc: {:.3f}".format(
               self.current_epoch, self.epochs, average_loss, average_mIoU, average_pixAcc))

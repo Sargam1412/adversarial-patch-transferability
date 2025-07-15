@@ -302,7 +302,7 @@ class PatchTrainer():
               x1, y1, x2, y2 = self.patch_coords[idx]
               image[:,:,y1:y2,x1:x2] = self.adv_patch
               patched_image_adv = image
-              true_label[:,:,y1:y2,x1:x2] = 10
+              true_label[:,y1:y2,x1:x2] = 10
               patched_label_adv = true_label
               #patched_image_adv, patched_label_adv = self.apply_patch_grad(image,true_label,self.adv_patch)
               #patched_image_rand, patched_label_rand = self.apply_patch_rand(image,true_label)

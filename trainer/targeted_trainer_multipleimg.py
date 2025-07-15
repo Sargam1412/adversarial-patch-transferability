@@ -202,8 +202,8 @@ class PatchTrainer():
       self.feature_maps_rand3 = None
       self.feature_maps_rand4 = None
       self.target_ft = target_ft.to(self.device)
-      self.patch_coords = patch_coords.to(self.device)
-      self.ft_map_coords = ft_map_coords.to(self.device)
+      self.patch_coords = patch_coords
+      self.ft_map_coords = ft_map_coords
     
   # Hook to store feature map
   def hook1(self, module, input, output):
@@ -293,11 +293,13 @@ class PatchTrainer():
             self.current_iteration += 1
             samplecnt += batch[0].shape[0]
             image, true_label,_, _, _, idx = batch
+            self.patch_coords[idx] = self.patch_coords[idx].to(self.device)
+            self.ft_map_coords[idx] = self.ft_map_coords[idx].to(self.device)
             image, true_label = image.to(self.device), true_label.to(self.device)
             
             # Randomly place patch in image and label(put ignore index)
-            if(len(patch_coords[idx]!=0)):
-              x1, y1, x2, y2 = patch_coords[idx]
+            if(len(self.patch_coords[idx]!=0)):
+              x1, y1, x2, y2 = self.patch_coords[idx]
               image[:,y1:y2,x1:x2] = self.adv_patch
               patched_image_adv = image
               true_label[:,y1:y2,x1:x2] = 10

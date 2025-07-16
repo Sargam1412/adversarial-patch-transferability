@@ -298,7 +298,7 @@ class PatchTrainer():
             image, true_label = image.to(self.device), true_label.to(self.device)
             
             # Randomly place patch in image and label(put ignore index)
-            if(len(self.patch_coords[idx]!=0)):
+            if(len(self.patch_coords[idx])!=0):
               x1, y1, x2, y2 = self.patch_coords[idx]
               image[:,:,y1:y2,x1:x2] = self.adv_patch
               patched_image_adv = image

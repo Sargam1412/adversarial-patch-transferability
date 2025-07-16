@@ -21,10 +21,10 @@ import matplotlib.pyplot as plt
 import pickle
 
 class PatchTrainer():
-  def __init__(self,config,main_logger,model_name,target_ft, patch_coords, ft_map_coords):#,patch1,patch2,patch3,patch4
+  def __init__(self,config,main_logger,model_name,target_ft, patch_coords, ft_map_coords, patch):#,patch1,patch2,patch3,patch4
       self.config = config
       self.start_epoch = 0
-      self.end_epoch = 30
+      self.end_epoch = 70
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
       self.batch_test = config.test.batch_size
@@ -93,9 +93,10 @@ class PatchTrainer():
       self.criterion = PatchLoss(self.config)
       ## optimizer
       # Initialize adversarial patch (random noise)
-      self.adv_patch = torch.rand((3, 200, 200), 
-                               requires_grad=True, 
-                               device=self.device)
+      # self.adv_patch = torch.rand((3, 200, 200), 
+      #                          requires_grad=True, 
+      #                          device=self.device)
+      self.adv_patch = patch.clone().detach().to(self.device)
       # self.adv_patch1 = patch1.clone().detach().to(self.device)
       # self.adv_patch1.requires_grad = True#torch.rand((3, 100, 100), 
                               # requires_grad=True, 

@@ -47,7 +47,7 @@ loss:
 
 ### 5.Training 
 train:
-  width: 1024
+  width: 2048
   height: 1024
   base_size: 2048
   flip: True

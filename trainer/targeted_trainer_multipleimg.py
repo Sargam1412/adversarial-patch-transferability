@@ -387,7 +387,7 @@ class PatchTrainer():
                   # self.adv_patch4.clamp_(0, 1)  # Keep pixel values in valid range
     
               ## ETA
-              eta_seconds = ((time.time() - start_time) / self.current_iteration) * (epochs - self.current_iteration)
+              eta_seconds = ((time.time() - start_time) / self.current_iteration) * (1000*epochs - self.current_iteration)
               eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
     
               if ep % self.log_per_iters == 0:

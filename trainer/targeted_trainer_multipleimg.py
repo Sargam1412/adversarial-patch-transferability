@@ -411,7 +411,7 @@ class PatchTrainer():
       self.logger.info("Epochs: {:d}/{:d}, Average loss: {:.3f}, Average mIoU: {:.3f}, Average pixAcc: {:.3f}".format(
         self.current_epoch, self.epochs, average_loss, average_mIoU, average_pixAcc))
       IoU.append(self.metric.get(full=True))
-      safety1 = self.adv_patch.clone().detach(), np.array(IOU)
+      safety1 = self.adv_patch.clone().detach(), np.array(IoU)
       pickle.dump( safety1, open(self.config.experiment.log_patch_address+self.config.model.name+"_targeted_sky_multiimg"+".p", "wb" ) )
       # safety2 = self.adv_patch2.clone()
       # pickle.dump( safety2.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap2"+".p", "wb" ) )

@@ -299,6 +299,7 @@ class PatchTrainer():
             
             # Randomly place patch in image and label(put ignore index)
             if(len(self.patch_coords[idx])!=0):
+              self.logger.info(f"(x1,y1,x2,y2):{x1,y1,x2,y2}")
               x1, y1, x2, y2 = self.patch_coords[idx]
               image[:,:,y1:y2,x1:x2] = self.adv_patch
               patched_image_adv = image

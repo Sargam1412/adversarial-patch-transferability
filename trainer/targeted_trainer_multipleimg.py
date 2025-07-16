@@ -409,8 +409,9 @@ class PatchTrainer():
       self.logger.info('-------------------------------------------------------------------------------------------------')
       self.logger.info("Epochs: {:d}/{:d}, Average loss: {:.3f}, Average mIoU: {:.3f}, Average pixAcc: {:.3f}".format(
         self.current_epoch, self.epochs, average_loss, average_mIoU, average_pixAcc))
-      safety1 = self.adv_patch.clone()
-      pickle.dump( safety1.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_targeted_sky_multiimg"+".p", "wb" ) )
+      IoU.append(self.metric.get(full=True))
+      safety1 = self.adv_patch.clone().detach(), np.array(IOU)
+      pickle.dump( safety1, open(self.config.experiment.log_patch_address+self.config.model.name+"_targeted_sky_multiimg"+".p", "wb" ) )
       # safety2 = self.adv_patch2.clone()
       # pickle.dump( safety2.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap2"+".p", "wb" ) )
       # safety3 = self.adv_patch3.clone()
@@ -424,7 +425,6 @@ class PatchTrainer():
       # if self.lr_scheduler:
       #     self.scheduler.step()
 
-      IoU.append(self.metric.get(full=True))
 
     return self.adv_patch.detach(),np.array(IoU)  # Return adversarial patch and IoUs over epochs
 

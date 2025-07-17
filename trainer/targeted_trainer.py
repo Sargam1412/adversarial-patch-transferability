@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 class PatchTrainer():
-  def __init__(self,config,main_logger,model_name,target_ft, patch_coords, ft_map,coords):#,patch1,patch2,patch3,patch4
+  def __init__(self,config,main_logger,model_name,target_ft, patch_coords, ft_map_coords):#,patch1,patch2,patch3,patch4
       self.config = config
       self.start_epoch = 0
       self.end_epoch = 10000

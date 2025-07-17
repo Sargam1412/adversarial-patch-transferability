@@ -21,10 +21,10 @@ import matplotlib.pyplot as plt
 import pickle
 
 class PatchTrainer():
-  def __init__(self,config,main_logger,model_name,target_ft):#,patch1,patch2,patch3,patch4
+  def __init__(self,config,main_logger,model_name,target_ft, patch_coords, ft_map,coords):#,patch1,patch2,patch3,patch4
       self.config = config
       self.start_epoch = 0
-      self.end_epoch = 1000
+      self.end_epoch = 10000
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
       self.batch_test = config.test.batch_size
@@ -202,6 +202,8 @@ class PatchTrainer():
       self.feature_maps_rand3 = None
       self.feature_maps_rand4 = None
       self.target_ft = target_ft.to(self.device)
+      self.patch_coords = patch_coords
+      self.ft_map_coords = ft_map_coords
     
   # Hook to store feature map
   def hook1(self, module, input, output):
@@ -282,6 +284,8 @@ class PatchTrainer():
         samplecnt += batch[0].shape[0]
         image, true_label,_, _, _, idx = batch
         image, true_label = image.to(self.device), true_label.to(self.device)
+        self.patch_coords[idx] = self.patch_coords[idx].to(self.device)
+        self.ft_map_coords[idx] = self.ft_map_coords[idx].to(self.device)
         momentum1 = torch.tensor(0, dtype=torch.float32).to(self.device)
         # momentum2 = torch.tensor(0, dtype=torch.float32).to(self.device)
         # momentum3 = torch.tensor(0, dtype=torch.float32).to(self.device)
@@ -294,7 +298,13 @@ class PatchTrainer():
                 
             
             # Randomly place patch in image and label(put ignore index)
-            patched_image_adv, patched_label_adv = self.apply_patch_grad(image,true_label,self.adv_patch)
+            x1, y1, x2, y2 = self.patch_coords[idx]
+            #self.logger.info(f"(x1,y1,x2,y2):{x1,y1,x2,y2}, Idx:{idx}, Iter: {i_iter}")
+            image[:,:,y1:y2,x1:x2] = self.adv_patch
+            patched_image_adv = image
+            true_label[:,y1:y2,x1:x2] = 10
+            patched_label_adv = true_label
+            # patched_image_adv, patched_label_adv = self.apply_patch_grad(image,true_label,self.adv_patch)
             #patched_image_rand, patched_label_rand = self.apply_patch_rand(image,true_label)
             # fig = plt.figure()
             # ax = fig.add_subplot(1,2,1)
@@ -308,7 +318,9 @@ class PatchTrainer():
             #output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
             #F = torch.zeros(( self.feature_map_shape[1], self.feature_map_shape[2]), device=self.device)
             self.logger.info(f"feature_map shape:{self.feature_maps_adv2.shape}")
-            adv_ft = self.feature_maps_adv2.squeeze(0)[:,26:39,29:36]
+            fx1, fy1, fx2, fy2 = self.ft_map_coords[idx]
+            adv_ft = self.feature_maps_adv2.squeeze(0)[:,fy1:fy2,fx1:fx2]
+            # adv_ft = self.feature_maps_adv2.squeeze(0)[:,26:39,29:36]
             # F1 = ((self.feature_maps_adv1[i]-self.feature_maps_rand1[i])*H1[idx[i]]) + (H1[idx[i]])**2
             F2 = adv_ft-self.target_ft
             # F3 = ((self.feature_maps_adv3[i]-self.feature_maps_rand3[i])*self.H3[idx[i]]) + (self.H3[idx[i]])**2
@@ -396,8 +408,9 @@ class PatchTrainer():
             self.logger.info('-------------------------------------------------------------------------------------------------')
             self.logger.info("Epochs: {:d}/{:d}, Average loss: {:.3f}, Average mIoU: {:.3f}, Average pixAcc: {:.3f}".format(
               self.current_epoch, self.epochs, average_loss, average_mIoU, average_pixAcc))
-            safety1 = self.adv_patch.clone()
-            pickle.dump( safety1.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_targeted_sky"+".p", "wb" ) )
+            IoU.append(self.metric.get(full=True))
+            safety1 = self.adv_patch.clone().detach(), np.array(IoU)
+            pickle.dump( safety1, open(self.config.experiment.log_patch_address+self.config.model.name+"_targeted_sky"+".p", "wb" ) )
             # safety2 = self.adv_patch2.clone()
             # pickle.dump( safety2.detach(), open(self.config.experiment.log_patch_address+self.config.model.name+"_bbfa_modifiedloss_amap2"+".p", "wb" ) )
             # safety3 = self.adv_patch3.clone()
@@ -411,7 +424,7 @@ class PatchTrainer():
             # if self.lr_scheduler:
             #     self.scheduler.step()
       
-            IoU.append(self.metric.get(full=True))
+            
       else:
         break
 

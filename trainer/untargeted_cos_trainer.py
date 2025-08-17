@@ -195,7 +195,7 @@ class PatchTrainer():
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
               loss, cos_sim = self.criterion.compute_cos_warmup_loss(self.feature_maps_adv, self.feature_maps_rand)
-              self.logger.info(cos_sim)
+              self.logger.info(cos_sim.item())
               total_loss += loss.item()
               #break
     
@@ -214,7 +214,7 @@ class PatchTrainer():
                   # momentum = (0.9*momentum) + (grad/ (torch.norm(grad) + 1e-8))
                   # self.adv_patch -= 0.01 * momentum / (momentum.norm() + 1e-8)
                   # self.logger.info(self.adv_patch.grad)
-                  self.adv_patch -= 0.01 * self.adv_patch.grad.data.sign()
+                  self.adv_patch += 0.01 * self.adv_patch.grad.data.sign()
                   self.adv_patch.clamp_(-2.1, 2.6)  # Keep pixel values in valid range
     
               ## ETA

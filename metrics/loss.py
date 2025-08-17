@@ -137,7 +137,7 @@ class PatchLoss(nn.Module):
     
             total_pixels = float(correct_mask.sum() + incorrect_mask.sum() + 1e-8)
     
-            loss_weighted = (1 - self.gamma) * loss[correct_mask].sum() + \
-                            self.gamma * loss[incorrect_mask].sum()
+            loss_weighted = (0.3) * loss[correct_mask].sum() + \
+                            0.7 * loss[incorrect_mask].sum()
 
             return loss_weighted / total_pixels, cos_sim

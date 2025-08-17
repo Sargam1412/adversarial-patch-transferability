@@ -108,7 +108,7 @@ class PatchLoss(nn.Module):
         loss = ce_loss(model_output, label.long())  # Compute loss for all pixels
         return loss 
 
-    def compute_cos_warmup_loss(self, adv_ft_map, rand_ft_map):
+    def compute_cos_warmup_loss(self, adv_ft_map, rand_ft_map, pred, target):
         #Compute cosine similarity between adv and rand ft map
         # Flatten to vectors
         v1 = adv_ft_map.reshape(-1)
@@ -123,6 +123,21 @@ class PatchLoss(nn.Module):
         if (cos_sim<0.8):
             return -cos_sim, cos_sim
         else:
-            F=adv_ft_map-rand_ft_map
-            l2=torch.mean(F**2)
-            return l2, cos_sim
+            N, C, H, W = pred.shape
+            pred_softmax = F.softmax(pred, dim=1)
+            target_flat = target.view(-1)
+            pred_label = pred_softmax.argmax(dim=1)
+    
+            # Flatten for per-pixel comparison
+            pred_label_flat = pred_label.view(-1)
+            correct_mask = (pred_label_flat == target_flat) & (target_flat != self.ignore_label)
+            incorrect_mask = (pred_label_flat != target_flat) & (target_flat != self.ignore_label)
+    
+            loss = F.cross_entropy(pred, target, ignore_index=self.ignore_label, reduction='none').view(-1)
+    
+            total_pixels = float(correct_mask.sum() + incorrect_mask.sum() + 1e-8)
+    
+            loss_weighted = (1 - self.gamma) * loss[correct_mask].sum() + \
+                            self.gamma * loss[incorrect_mask].sum()
+
+            return loss_weighted / total_pixels, cos_sim

@@ -108,7 +108,7 @@ class PatchLoss(nn.Module):
         loss = ce_loss(model_output, label.long())  # Compute loss for all pixels
         return loss 
 
-    def compute_cos_loss(self, adv_ft_map, rand_ft_map):
+    def compute_cos_warmup_loss(self, adv_ft_map, rand_ft_map):
         #Compute cosine similarity between adv and rand ft map
         # Flatten to vectors
         v1 = adv_ft_map.reshape(-1)
@@ -120,6 +120,9 @@ class PatchLoss(nn.Module):
     
         # Cosine similarity
         cos_sim = torch.dot(v1_norm, v2_norm)
-        return cos_sim
-
-
+        if (cos_sim<0.8):
+            return cos_sim
+        else:
+            F=adv_ft_map-rand_ft_map
+            l2=torch.sum(F**2)
+            return l2, cos_sim

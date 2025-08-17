@@ -173,7 +173,7 @@ class PatchTrainer():
       self.metric.reset()
       total_loss = 0
       samplecnt = 0
-      momentum = torch.zeros_like(self.adv_patch, device=self.device)
+      # momentum = torch.zeros_like(self.adv_patch, device=self.device)
       for i_iter, batch in enumerate(self.train_dataloader, 0):
         if i_iter<1000:
           self.current_iteration += 1
@@ -207,12 +207,11 @@ class PatchTrainer():
               self.model2.model.zero_grad()
               if self.adv_patch.grad is not None:
                 self.adv_patch.grad.zero_()
-              grad = torch.autograd.grad(loss, self.adv_patch, retain_graph=True)[0]
               with torch.no_grad():
                   #norm_grad1 = grad1/ (torch.norm(grad1) + 1e-8)
-                  momentum = (0.9*momentum) + (grad/ (torch.norm(grad) + 1e-8))
-                  self.adv_patch -= 0.01 * momentum / (momentum.norm() + 1e-8)
-                  #self.patch += self.epsilon * self.patch.grad.data.sign()
+                  # momentum = (0.9*momentum) + (grad/ (torch.norm(grad) + 1e-8))
+                  # self.adv_patch -= 0.01 * momentum / (momentum.norm() + 1e-8)
+                  self.adv_patch -= 0.01 * self.adv_patch.grad.data.sign()
                   self.adv_patch.clamp_(-2.1, 2.6)  # Keep pixel values in valid range
     
               ## ETA

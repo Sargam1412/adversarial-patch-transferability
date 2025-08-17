@@ -207,6 +207,7 @@ class PatchTrainer():
               self.model2.model.zero_grad()
               if self.adv_patch.grad is not None:
                 self.adv_patch.grad.zero_()
+              loss.backward()
               with torch.no_grad():
                   #norm_grad1 = grad1/ (torch.norm(grad1) + 1e-8)
                   # momentum = (0.9*momentum) + (grad/ (torch.norm(grad) + 1e-8))

@@ -121,7 +121,7 @@ class PatchLoss(nn.Module):
         # Cosine similarity
         cos_sim = torch.dot(v1_norm, v2_norm)
         if (cos_sim<0.8):
-            return cos_sim
+            return -cos_sim, cos_sim
         else:
             F=adv_ft_map-rand_ft_map
             l2=torch.sum(F**2)

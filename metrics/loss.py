@@ -124,5 +124,5 @@ class PatchLoss(nn.Module):
             return -cos_sim, cos_sim
         else:
             F=adv_ft_map-rand_ft_map
-            l2=torch.sum(F**2)
+            l2=torch.mean(F**2)
             return l2, cos_sim

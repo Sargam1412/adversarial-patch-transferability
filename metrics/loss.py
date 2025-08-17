@@ -119,7 +119,7 @@ class PatchLoss(nn.Module):
         v2_norm = v2 / (v2.norm(dim=0) + 1e-8)
     
         # Cosine similarity
-        cos_sim = torch.dot(v1_norm, v2_norm).item()
+        cos_sim = torch.dot(v1_norm, v2_norm)
         return cos_sim
 
 

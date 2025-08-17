@@ -140,4 +140,4 @@ class PatchLoss(nn.Module):
             loss_weighted = (0.3) * loss[correct_mask].sum() + \
                             0.7 * loss[incorrect_mask].sum()
 
-            return loss_weighted / total_pixels, cos_sim
+            return loss_weighted, cos_sim

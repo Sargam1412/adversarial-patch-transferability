@@ -115,8 +115,8 @@ class PatchLoss(nn.Module):
         v2 = rand_ft_map.reshape(-1)
     
         # Normalize
-        v1_norm = v1 / (v1.norm(dim=0) + eps)
-        v2_norm = v2 / (v2.norm(dim=0) + eps)
+        v1_norm = v1 / (v1.norm(dim=0) + 1e-8)
+        v2_norm = v2 / (v2.norm(dim=0) + 1e-8)
     
         # Cosine similarity
         cos_sim = torch.dot(v1_norm, v2_norm).item()

@@ -107,3 +107,19 @@ class PatchLoss(nn.Module):
         ce_loss = nn.CrossEntropyLoss(ignore_index=self.config.train.ignore_label)  # Per-pixel loss
         loss = ce_loss(model_output, label.long())  # Compute loss for all pixels
         return loss 
+
+    def compute_cos_loss(self, adv_ft_map, rand_ft_map):
+        #Compute cosine similarity between adv and rand ft map
+        # Flatten to vectors
+        v1 = adv_ft_map.reshape(-1)
+        v2 = rand_ft_map.reshape(-1)
+    
+        # Normalize
+        v1_norm = v1 / (v1.norm(dim=0) + eps)
+        v2_norm = v2 / (v2.norm(dim=0) + eps)
+    
+        # Cosine similarity
+        cos_sim = torch.dot(v1_norm, v2_norm).item()
+        return cos_sim
+
+

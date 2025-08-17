@@ -194,7 +194,7 @@ class PatchTrainer():
               output1 = self.model1.predict(patched_image_adv,patched_label_adv.shape)
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
-              loss, cos_sim = self.criterion.compute_cos_warmup_loss(self.feature_maps_adv, self.feature_maps_rand)
+              loss, cos_sim = self.criterion.compute_cos_warmup_loss(self.feature_maps_adv, self.feature_maps_rand, output1, true_label)
               self.logger.info(cos_sim.item())
               total_loss += loss.item()
               #break

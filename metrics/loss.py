@@ -133,7 +133,7 @@ class PatchLoss(nn.Module):
             correct_mask = (pred_label_flat == target_flat) & (target_flat != self.ignore_label)
             incorrect_mask = (pred_label_flat != target_flat) & (target_flat != self.ignore_label)
     
-            loss = F.cross_entropy(pred, target, ignore_index=self.ignore_label, reduction='none').view(-1)
+            loss = F.cross_entropy(pred, target.long(), ignore_index=self.ignore_label, reduction='none').view(-1)
     
             total_pixels = float(correct_mask.sum() + incorrect_mask.sum() + 1e-8)
     

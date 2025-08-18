@@ -152,6 +152,6 @@ class PatchLoss(nn.Module):
     
             loss_weighted = (0.3) * loss_correct.mean() + 
                             0.7 * loss_incorrect.mean()
-            loss_cos = F.relu(cos_sim - 0.8)
+            loss_cos = F.relu(cos_sim - 0.75)
             
-            return loss_weighted + 5*loss_cos, cos_sim
+            return loss_weighted + 4*loss_cos, cos_sim

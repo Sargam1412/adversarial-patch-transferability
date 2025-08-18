@@ -133,12 +133,25 @@ class PatchLoss(nn.Module):
             correct_mask = (pred_label_flat == target_flat) & (target_flat != self.ignore_label)
             incorrect_mask = (pred_label_flat != target_flat) & (target_flat != self.ignore_label)
     
-            loss = F.cross_entropy(pred, target.long(), ignore_index=self.ignore_label, reduction='mean').view(-1)
+            loss = F.cross_entropy(pred, target.long(), ignore_index=self.ignore_label, reduction='none').view(-1)
     
-            total_pixels = float(correct_mask.sum() + incorrect_mask.sum() + 1e-8)
+            # total_pixels = float(correct_mask.sum() + incorrect_mask.sum() + 1e-8)
+            loss_correct = loss[correct_mask]
+            loss_incorrect = loss[incorrect_mask]
+            
+            # Avoid empty tensors
+            if loss_correct.numel() > 0:
+                loss_correct = (loss_correct - loss_correct.min()) / (loss_correct.max() - loss_correct.min() + 1e-8)
+            else:
+                loss_correct = torch.tensor(0., device=loss.device)
+            
+            if loss_incorrect.numel() > 0:
+                loss_incorrect = (loss_incorrect - loss_incorrect.min()) / (loss_incorrect.max() - loss_incorrect.min() + 1e-8)
+            else:
+                loss_incorrect = torch.tensor(0., device=loss.device)
     
-            loss_weighted = (0.3) * loss[correct_mask].sum() + \
-                            0.7 * loss[incorrect_mask].sum()
+            loss_weighted = (0.3) * loss_correct.mean() + 
+                            0.7 * loss_incorrect.mean()
             loss_cos = F.relu(cos_sim - 0.8)
             
             return loss_weighted + 5*loss_cos, cos_sim

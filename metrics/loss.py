@@ -150,7 +150,7 @@ class PatchLoss(nn.Module):
             else:
                 loss_incorrect = torch.tensor(0., device=loss.device)
     
-            loss_weighted = (0.3) * loss_correct.mean() + 
+            loss_weighted = (0.3) * loss_correct.mean() + \
                             0.7 * loss_incorrect.mean()
             loss_cos = F.relu(cos_sim - 0.75)
             

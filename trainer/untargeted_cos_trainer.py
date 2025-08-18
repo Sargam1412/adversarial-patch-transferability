@@ -95,9 +95,11 @@ class PatchTrainer():
       ## optimizer
       # Initialize adversarial patch (random noise)
       if (resume==False):
-        self.adv_patch = torch.rand((3, 200, 200), 
-                                 requires_grad=True, 
-                                 device=self.device)
+        low, high = -2.1, 2.6
+        self.adv_patch = (low + (high - low) * torch.rand((3, 200, 200), 
+                                                  device=self.device,
+                                                  requires_grad=True))
+
       else:
         self.adv_patch = patch.clone().detach().to(self.device)
         self.adv_patch.requires_grad = True

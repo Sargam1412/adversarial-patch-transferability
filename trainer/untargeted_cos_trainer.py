@@ -99,7 +99,7 @@ class PatchTrainer():
         self.adv_patch = (low + (high - low) * torch.rand((3, 200, 200), 
                                                   device=self.device,
                                                   requires_grad=True))
-
+        self.adv_patch.requires_grad_()
       else:
         self.adv_patch = patch.clone().detach().to(self.device)
         self.adv_patch.requires_grad = True

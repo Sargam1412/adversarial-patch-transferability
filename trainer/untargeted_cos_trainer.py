@@ -98,7 +98,7 @@ class PatchTrainer():
         low, high = -2.1, 2.6
         self.adv_patch = (low + (high - low) * torch.rand((3, 200, 200), 
                                                   device=self.device,
-                                                  requires_grad=True))
+                                                  requires_grad=True)).detach()
         self.adv_patch.requires_grad_()
       else:
         self.adv_patch = patch.clone().detach().to(self.device)
@@ -235,6 +235,8 @@ class PatchTrainer():
                       mIoU,
                       str(datetime.timedelta(seconds=int(time.time() - start_time))),
                       eta_string))
+          else:
+            break
           
 
       average_pixAcc, average_mIoU = self.metric.get()

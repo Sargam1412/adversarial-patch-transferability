@@ -235,8 +235,8 @@ class PatchTrainer():
                       mIoU,
                       str(datetime.timedelta(seconds=int(time.time() - start_time))),
                       eta_string))
-          else:
-            break
+        else:
+          break
           
 
       average_pixAcc, average_mIoU = self.metric.get()

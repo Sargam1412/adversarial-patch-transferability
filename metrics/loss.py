@@ -154,4 +154,4 @@ class PatchLoss(nn.Module):
                             0.7 * loss_incorrect.mean()
             loss_cos = F.relu(cos_sim - 0.75)
             
-            return loss_weighted - 0.5*loss_cos, cos_sim
+            return loss_weighted, cos_sim # - 0.5*loss_cos

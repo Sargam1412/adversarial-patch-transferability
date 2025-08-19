@@ -210,8 +210,8 @@ class PatchTrainer():
               self.model2.model.zero_grad()
               if self.adv_patch.grad is not None:
                 self.adv_patch.grad.zero_()
-              loss.backward()
-              # grad = torch.autograd.grad(loss, self.adv_patch, retain_graph=True)[0]
+              # loss.backward()
+              grad = torch.autograd.grad(loss, self.adv_patch, retain_graph=True)[0]
               with torch.no_grad():
                   #norm_grad1 = grad1/ (torch.norm(grad1) + 1e-8)
                   # momentum = (0.9*momentum) + (grad/ (torch.norm(grad) + 1e-8))
@@ -219,13 +219,13 @@ class PatchTrainer():
                   # self.logger.info(grad)
                   # self.adv_patch += 0.01 * self.adv_patch.grad.data.sign()
                   # Compute gradient
-                  grad = self.adv_patch.grad.data
+                  # grad = self.adv_patch.grad.data
                   
                   # Normalize the gradient (L2 norm across all pixels)
-                  grad_norm = grad / (grad.norm() + 1e-8)
+                  grad_norm = grad / (torch.norm(grad) + 1e-8)
                   
                   # Update in the normalized gradient direction
-                  self.adv_patch = self.adv_patch + 0.01 * grad_norm
+                  self.adv_patch += 0.01 * grad_norm
                   self.adv_patch.clamp_(-2.1, 2.6)  # Keep pixel values in valid range
     
               ## ETA

@@ -217,7 +217,15 @@ class PatchTrainer():
                   # momentum = (0.9*momentum) + (grad/ (torch.norm(grad) + 1e-8))
                   # self.adv_patch += 0.01 * momentum / (momentum.norm() + 1e-8)
                   # self.logger.info(grad)
-                  self.adv_patch += 0.01 * self.adv_patch.grad.data.sign()
+                  # self.adv_patch += 0.01 * self.adv_patch.grad.data.sign()
+                  # Compute gradient
+                  grad = self.adv_patch.grad.data
+                  
+                  # Normalize the gradient (L2 norm across all pixels)
+                  grad_norm = grad / (grad.norm() + 1e-8)
+                  
+                  # Update in the normalized gradient direction
+                  self.adv_patch = self.adv_patch + 0.01 * grad_norm
                   self.adv_patch.clamp_(-2.1, 2.6)  # Keep pixel values in valid range
     
               ## ETA

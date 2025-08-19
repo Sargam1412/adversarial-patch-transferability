@@ -222,10 +222,10 @@ class PatchTrainer():
                   # grad = self.adv_patch.grad.data
                   
                   # Normalize the gradient (L2 norm across all pixels)
-                  grad_norm = grad / (torch.norm(grad) + 1e-8)
+                  # grad_norm = grad / (torch.norm(grad) + 1e-8)
                   
                   # Update in the normalized gradient direction
-                  self.adv_patch += 0.01 * grad_norm
+                  self.adv_patch += 0.01 * (grad / (torch.norm(grad) + 1e-8))
                   self.adv_patch.clamp_(-2.1, 2.6)  # Keep pixel values in valid range
     
               ## ETA

@@ -253,7 +253,7 @@ class PatchTrainer():
         self.current_epoch, self.epochs, average_loss, average_mIoU, average_pixAcc))
       IoU.append(self.metric.get(full=True))
       safety = self.adv_patch.clone().detach(), np.array(IoU)
-      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_cos_loss_sidewalk"+".p", "wb" ) )
+      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_entropy_loss_sidewalk"+".p", "wb" ) )
       
       #self.test() ## Doing 1 iteration of testing
       self.logger.info('-------------------------------------------------------------------------------------------------')

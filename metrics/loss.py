@@ -157,7 +157,14 @@ class PatchLoss(nn.Module):
             return loss_weighted, cos_sim # - 0.5*loss_cos
 
     def compute_entropy_loss(self, adv_ft_map, rand_ft_map):
-        v1 = adv_ft_map.view(adv_ft_map.size(0), -1)
+        if adv_ft_map.dim() == 3:   # (C, H, W)
+            adv_ft_map = adv_ft_map.unsqueeze(0)  # (1, C, H, W)
+
+        B, C, H, W = adv_ft_map.shape
+        
+        # Rearrange to pixels × classes
+        v1 = adv_ft_map.permute(0, 2, 3, 1)   # (B, H, W, C)
+        v1 = v1.reshape(-1, C)                # (B*H*W, C)
         p = F.softmax(v1, dim=-1)
         loss = - (p * p.log()).sum(dim=-1).mean()
         return loss

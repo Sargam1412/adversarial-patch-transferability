@@ -24,7 +24,7 @@ class PatchTrainer():
   def __init__(self,config,main_logger,model_name, coords, resume=False, patch=None):#,patch1,patch2,patch3,patch4
       self.config = config
       self.start_epoch = 0
-      self.end_epoch = 1
+      self.end_epoch = 30
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
       self.batch_test = config.test.batch_size
@@ -172,30 +172,59 @@ class PatchTrainer():
       if 'pidnet' not in self.model_name:
           return None, None
       
-      # PIDNet returns [x_extra_p, x_, x_extra_d] when augment=True
-      # P branch: outputs[0], I branch: outputs[1], D branch: outputs[2]
-      branch_outputs = {
-          'P': outputs[0],  # Precise branch
-          'I': outputs[1],  # Integral branch  
-          'D': outputs[2]   # Detail branch
-      }
-      
-      branch_losses = {}
-      branch_gradients = {}
-      
-      for branch_name, branch_output in branch_outputs.items():
-          # Compute cross-entropy loss for this branch
-          ce_loss = self.criterion.compute_loss_direct(branch_output, labels)
-          branch_losses[branch_name] = ce_loss.item()
+      try:
+          # PIDNet returns [x_extra_p, x_, x_extra_d] when augment=True
+          # P branch: outputs[0], I branch: outputs[1], D branch: outputs[2]
+          branch_outputs = {
+              'P': outputs[0],  # Precise branch
+              'I': outputs[1],  # Integral branch  
+              'D': outputs[2]   # Detail branch
+          }
           
-          # Compute gradient with respect to the patch
-          if self.adv_patch.grad is not None:
-              self.adv_patch.grad.zero_()
+          branch_losses = {}
+          branch_gradients = {}
           
-          grad = torch.autograd.grad(ce_loss, self.adv_patch, retain_graph=True)[0]
-          branch_gradients[branch_name] = grad.clone().detach()
-      
-      return branch_losses, branch_gradients
+          # Debug info
+          self.logger.info(f"Labels shape: {labels.shape}")
+          for branch_name, branch_output in branch_outputs.items():
+              self.logger.info(f"{branch_name} branch output shape: {branch_output.shape}")
+          
+          for branch_name, branch_output in branch_outputs.items():
+              # Interpolate branch output to match label dimensions
+              # labels shape: [B, H, W], branch_output shape: [B, C, H', W']
+              target_size = (labels.shape[-2], labels.shape[-1])  # (H, W)
+              
+              # Interpolate the branch output to match target spatial dimensions
+              interpolated_output = torch.nn.functional.interpolate(
+                  branch_output, 
+                  size=target_size, 
+                  mode='bilinear', 
+                  align_corners=True
+              )
+              
+              self.logger.info(f"{branch_name} interpolated output shape: {interpolated_output.shape}")
+              
+              # Compute cross-entropy loss for this branch with interpolated output
+              ce_loss = self.criterion.compute_loss_direct(interpolated_output, labels)
+              branch_losses[branch_name] = ce_loss.item()
+              
+              # Compute gradient with respect to the patch
+              if self.adv_patch.grad is not None:
+                  self.adv_patch.grad.zero_()
+              
+              grad = torch.autograd.grad(ce_loss, self.adv_patch, retain_graph=True)[0]
+              branch_gradients[branch_name] = grad.clone().detach()
+          
+          return branch_losses, branch_gradients
+          
+      except Exception as e:
+          self.logger.error(f"Error in compute_branch_gradients: {e}")
+          self.logger.error(f"Outputs type: {type(outputs)}, length: {len(outputs) if isinstance(outputs, (list, tuple)) else 'N/A'}")
+          self.logger.error(f"Labels shape: {labels.shape}")
+          if isinstance(outputs, (list, tuple)):
+              for i, output in enumerate(outputs):
+                  self.logger.error(f"Output {i} shape: {output.shape if hasattr(output, 'shape') else 'N/A'}")
+          return None, None
   
   def log_branch_analysis(self, branch_losses, branch_gradients, iteration):
       """
@@ -267,9 +296,13 @@ class PatchTrainer():
                   # Compute branch-specific gradients
                   branch_losses, branch_gradients = self.compute_branch_gradients(raw_outputs1, patched_label_adv)
                   
-                  # Log branch analysis
-                  if i_iter % self.log_per_iters == 0:
-                      crucial_branch = self.log_branch_analysis(branch_losses, branch_gradients, i_iter)
+                  # Log branch analysis only if we have valid data
+                  if branch_losses is not None and branch_gradients is not None:
+                      if i_iter % self.log_per_iters == 0:
+                          crucial_branch = self.log_branch_analysis(branch_losses, branch_gradients, i_iter)
+                  else:
+                      if i_iter % self.log_per_iters == 0:
+                          self.logger.warning(f"Iteration {i_iter}: Branch analysis failed, skipping logging")
               
               # Compute adaptive loss
               loss = self.criterion.compute_cos_loss(self.feature_maps_adv, self.feature_maps_rand)
@@ -318,8 +351,16 @@ class PatchTrainer():
       IoU.append(self.metric.get(full=True))
       
       # Save patch and IoU data along with branch analysis
-      safety = self.adv_patch.clone().detach(), np.array(IoU), self.branch_losses, self.branch_gradients
-      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_ce_loss_sidewalk_branch_analysis"+".p", "wb" ) )
+      # Check if we have valid branch analysis data
+      if len(self.branch_losses['P']) > 0 and len(self.branch_gradients['P']) > 0:
+          safety = self.adv_patch.clone().detach(), np.array(IoU), self.branch_losses, self.branch_gradients
+          pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_cos_loss_sidewalk_branch_analysis"+".p", "wb" ) )
+          self.logger.info("Saved training data with branch analysis")
+      else:
+          # Fallback to saving without branch analysis
+          safety = self.adv_patch.clone().detach(), np.array(IoU)
+          pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_cos_loss_sidewalk"+".p", "wb" ) )
+          self.logger.warning("Branch analysis data not available, saved training data without branch analysis")
       
       #self.test() ## Doing 1 iteration of testing
       self.logger.info('-------------------------------------------------------------------------------------------------')

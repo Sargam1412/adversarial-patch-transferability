@@ -204,8 +204,27 @@ class PatchTrainer():
               
               self.logger.info(f"{branch_name} interpolated output shape: {interpolated_output.shape}")
               
-              # Compute cross-entropy loss for this branch with interpolated output
-              ce_loss = self.criterion.compute_loss_direct(interpolated_output, labels)
+              # Handle D branch differently - it outputs 1 channel but we need 2 for binary classification
+              if branch_name == 'D':
+                  # Convert 1-channel output to 2-channel binary logits
+                  # Channel 0: background/ignore, Channel 1: foreground/valid pixels
+                  zeros_channel = torch.zeros_like(interpolated_output)
+                  binary_output = torch.cat([zeros_channel, interpolated_output], dim=1)
+                  
+                  # Convert multi-class labels to binary labels
+                  # 0: ignore label, 1: any valid semantic class
+                  binary_labels = (labels != self.config.train.ignore_label).long()
+                  
+                  self.logger.info(f"D branch binary output shape: {binary_output.shape}")
+                  self.logger.info(f"D branch binary labels shape: {binary_labels.shape}")
+                  self.logger.info(f"D branch binary labels unique values: {torch.unique(binary_labels)}")
+                  
+                  # Compute binary cross-entropy loss for D branch
+                  ce_loss = self.criterion.compute_loss_direct(binary_output, binary_labels)
+              else:
+                  # P and I branches have 19 channels, use original labels
+                  ce_loss = self.criterion.compute_loss_direct(interpolated_output, labels)
+              
               branch_losses[branch_name] = ce_loss.item()
               
               # Compute gradient with respect to the patch

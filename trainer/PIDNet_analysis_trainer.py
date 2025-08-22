@@ -24,7 +24,7 @@ class PatchTrainer():
   def __init__(self,config,main_logger,model_name, coords, resume=False, patch=None):#,patch1,patch2,patch3,patch4
       self.config = config
       self.start_epoch = 0
-      self.end_epoch = 30
+      self.end_epoch = 1
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
       self.batch_test = config.test.batch_size
@@ -319,7 +319,7 @@ class PatchTrainer():
       
       # Save patch and IoU data along with branch analysis
       safety = self.adv_patch.clone().detach(), np.array(IoU), self.branch_losses, self.branch_gradients
-      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_cos_loss_sidewalk_branch_analysis"+".p", "wb" ) )
+      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_ce_loss_sidewalk_branch_analysis"+".p", "wb" ) )
       
       #self.test() ## Doing 1 iteration of testing
       self.logger.info('-------------------------------------------------------------------------------------------------')

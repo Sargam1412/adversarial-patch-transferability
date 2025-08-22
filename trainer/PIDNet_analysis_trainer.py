@@ -324,7 +324,7 @@ class PatchTrainer():
                           self.logger.warning(f"Iteration {i_iter}: Branch analysis failed, skipping logging")
               
               # Compute adaptive loss
-              loss = self.criterion.compute_cos_warmup_loss(self.feature_maps_adv, self.feature_maps_rand)
+              loss = self.criterion.compute_entropy_loss(self.feature_maps_adv, self.feature_maps_rand)
               total_loss += loss.item()
               #break
     

@@ -411,7 +411,7 @@ class PatchTrainerDebug():
                   continue
               
               # Compute adaptive loss
-              loss = self.criterion.compute_entropy_loss(self.feature_maps_adv, self.feature_maps_rand)
+              loss = self.criterion.compute_cos_warmup_loss(self.feature_maps_adv, self.feature_maps_rand, output1, patched_label_adv)
               total_loss += loss.item()
               
               # Debug gradients before backward pass
@@ -482,7 +482,7 @@ class PatchTrainerDebug():
       
       # Save patch, IoU data, and gradient debug information
       safety = self.adv_patch.clone().detach(), np.array(IoU), self.gradient_debug_info
-      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_entropy_loss_sidewalk_gradient_debug"+".p", "wb" ) )
+      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_cos_loss_sidewalk_gradient_debug"+".p", "wb" ) )
       
       #self.test() ## Doing 1 iteration of testing
       self.logger.info('-------------------------------------------------------------------------------------------------')

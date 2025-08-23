@@ -161,13 +161,71 @@ class PatchTrainerDebug():
         if name == self.layer_name:
           module.register_forward_hook(self.hook2)
   
-  def debug_gradients(self, loss, feature_maps_adv, feature_maps_rand, iteration):
+  def debug_gradients_before_backward(self, loss, feature_maps_adv, feature_maps_rand, iteration):
       """
-      Debug gradient flow to identify where the problem is
+      Debug gradient flow BEFORE backward pass - only check basic properties
       """
       debug_info = {}
       
-      # 1. Check if feature maps have gradients
+      # 1. Check feature map statistics (no gradients yet)
+      if feature_maps_adv is not None:
+          debug_info['feature_maps_adv_norm'] = torch.norm(feature_maps_adv).item()
+          debug_info['feature_maps_adv_mean'] = feature_maps_adv.mean().item()
+          debug_info['feature_maps_adv_std'] = feature_maps_adv.std().item()
+          debug_info['feature_maps_adv_min'] = feature_maps_adv.min().item()
+          debug_info['feature_maps_adv_max'] = feature_maps_adv.max().item()
+          debug_info['feature_maps_adv_shape'] = feature_maps_adv.shape
+      else:
+          debug_info['feature_maps_adv_norm'] = 0.0
+          debug_info['feature_maps_adv_mean'] = 0.0
+          debug_info['feature_maps_adv_std'] = 0.0
+          debug_info['feature_maps_adv_min'] = 0.0
+          debug_info['feature_maps_adv_max'] = 0.0
+          debug_info['feature_maps_adv_shape'] = None
+      
+      # 2. Check patch properties (no gradients yet)
+      debug_info['patch_shape'] = self.adv_patch.shape
+      debug_info['patch_norm'] = torch.norm(self.adv_patch).item()
+      debug_info['patch_requires_grad'] = self.adv_patch.requires_grad
+      debug_info['patch_grad_exists'] = self.adv_patch.grad is not None
+      
+      # 3. Check loss properties (no gradients yet)
+      debug_info['loss_value'] = loss.item()
+      debug_info['loss_shape'] = loss.shape
+      debug_info['loss_requires_grad'] = loss.requires_grad
+      
+      # 4. Check if setup is correct for gradients
+      debug_info['setup_correct'] = (
+          feature_maps_adv is not None and 
+          self.adv_patch.requires_grad and 
+          loss.requires_grad
+      )
+      
+      # Store debug info
+      self.gradient_debug_info['loss_wrt_feature_maps'].append(0.0)  # Will be updated after backward
+      self.gradient_debug_info['feature_maps_wrt_patch'].append(0.0)  # Will be updated after backward
+      self.gradient_debug_info['patch_gradients'].append(0.0)  # Will be updated after backward
+      self.gradient_debug_info['loss_values'].append(debug_info['loss_value'])
+      self.gradient_debug_info['feature_map_norms'].append(debug_info['feature_maps_adv_norm'])
+      
+      # Log detailed debug information
+      self.logger.info(f"=== GRADIENT DEBUG ITERATION {iteration} (BEFORE BACKWARD) ===")
+      self.logger.info(f"Feature Maps Adv - Shape: {debug_info['feature_maps_adv_shape']}")
+      self.logger.info(f"Feature Maps Adv - Norm: {debug_info['feature_maps_adv_norm']:.6f}, Mean: {debug_info['feature_maps_adv_mean']:.6f}, Std: {debug_info['feature_maps_adv_std']:.6f}")
+      self.logger.info(f"Patch - Shape: {debug_info['patch_shape']}, Norm: {debug_info['patch_norm']:.6f}, Requires Grad: {debug_info['patch_requires_grad']}")
+      self.logger.info(f"Loss - Value: {debug_info['loss_value']:.6f}, Shape: {debug_info['loss_shape']}, Requires Grad: {debug_info['loss_requires_grad']}")
+      self.logger.info(f"Setup Correct for Gradients: {debug_info['setup_correct']}")
+      self.logger.info(f"==========================================")
+      
+      return debug_info
+      
+  def debug_gradients_after_backward(self, loss, feature_maps_adv, feature_maps_rand, iteration):
+      """
+      Debug gradient flow AFTER backward pass - now check actual gradients
+      """
+      debug_info = {}
+      
+      # 1. Check feature map gradients (after backward pass)
       if feature_maps_adv is not None and feature_maps_adv.grad is not None:
           debug_info['feature_maps_adv_grad_norm'] = torch.norm(feature_maps_adv.grad).item()
           debug_info['feature_maps_adv_grad_mean'] = feature_maps_adv.grad.mean().item()
@@ -177,7 +235,7 @@ class PatchTrainerDebug():
           debug_info['feature_maps_adv_grad_mean'] = 0.0
           debug_info['feature_maps_adv_grad_std'] = 0.0
       
-      # 2. Check patch gradients
+      # 2. Check patch gradients (after backward pass)
       if self.adv_patch.grad is not None:
           debug_info['patch_grad_norm'] = torch.norm(self.adv_patch.grad).item()
           debug_info['patch_grad_mean'] = self.adv_patch.grad.mean().item()
@@ -187,45 +245,34 @@ class PatchTrainerDebug():
           debug_info['patch_grad_mean'] = 0.0
           debug_info['patch_grad_std'] = 0.0
       
-      # 3. Check feature map statistics
-      if feature_maps_adv is not None:
-          debug_info['feature_maps_adv_norm'] = torch.norm(feature_maps_adv).item()
-          debug_info['feature_maps_adv_mean'] = feature_maps_adv.mean().item()
-          debug_info['feature_maps_adv_std'] = feature_maps_adv.std().item()
-          debug_info['feature_maps_adv_min'] = feature_maps_adv.min().item()
-          debug_info['feature_maps_adv_max'] = feature_maps_adv.max().item()
-      else:
-          debug_info['feature_maps_adv_norm'] = 0.0
-          debug_info['feature_maps_adv_mean'] = 0.0
-          debug_info['feature_maps_adv_std'] = 0.0
-          debug_info['feature_maps_adv_min'] = 0.0
-          debug_info['feature_maps_adv_max'] = 0.0
-      
-      # 4. Check loss statistics
-      debug_info['loss_value'] = loss.item()
-      debug_info['loss_grad_norm'] = torch.norm(loss.grad).item() if loss.grad is not None else 0.0
-      
-      # 5. Check if gradients are flowing
-      debug_info['gradient_flow_healthy'] = (
+      # 3. Check if gradients are meaningful
+      debug_info['gradients_meaningful'] = (
           debug_info['feature_maps_adv_grad_norm'] > 1e-8 and 
           debug_info['patch_grad_norm'] > 1e-8
       )
       
-      # Store debug info
-      self.gradient_debug_info['loss_wrt_feature_maps'].append(debug_info['feature_maps_adv_grad_norm'])
-      self.gradient_debug_info['feature_maps_wrt_patch'].append(debug_info['patch_grad_norm'])
-      self.gradient_debug_info['patch_gradients'].append(debug_info['patch_grad_norm'])
-      self.gradient_debug_info['loss_values'].append(debug_info['loss_value'])
-      self.gradient_debug_info['feature_map_norms'].append(debug_info['feature_maps_adv_norm'])
+      # Update the stored debug info with actual gradient values
+      if len(self.gradient_debug_info['loss_wrt_feature_maps']) > 0:
+          self.gradient_debug_info['loss_wrt_feature_maps'][-1] = debug_info['feature_maps_adv_grad_norm']
+          self.gradient_debug_info['feature_maps_wrt_patch'][-1] = debug_info['patch_grad_norm']
+          self.gradient_debug_info['patch_gradients'][-1] = debug_info['patch_grad_norm']
       
       # Log detailed debug information
-      self.logger.info(f"=== GRADIENT DEBUG ITERATION {iteration} ===")
-      self.logger.info(f"Feature Maps Adv - Norm: {debug_info['feature_maps_adv_norm']:.6f}, Mean: {debug_info['feature_maps_adv_mean']:.6f}, Std: {debug_info['feature_maps_adv_std']:.6f}")
-      self.logger.info(f"Feature Maps Adv Grad - Norm: {debug_info['feature_maps_adv_grad_norm']:.6f}, Mean: {debug_info['feature_maps_adv_grad_mean']:.6f}, Std: {debug_info['feature_maps_adv_grad_std']:.6f}")
+      self.logger.info(f"=== AFTER BACKWARD PASS - ITERATION {iteration} ===")
+      self.logger.info(f"Feature Maps Grad - Norm: {debug_info['feature_maps_adv_grad_norm']:.6f}, Mean: {debug_info['feature_maps_adv_grad_mean']:.6f}, Std: {debug_info['feature_maps_adv_grad_std']:.6f}")
       self.logger.info(f"Patch Grad - Norm: {debug_info['patch_grad_norm']:.6f}, Mean: {debug_info['patch_grad_mean']:.6f}, Std: {debug_info['patch_grad_std']:.6f}")
-      self.logger.info(f"Loss - Value: {debug_info['loss_value']:.6f}, Grad Norm: {debug_info['loss_grad_norm']:.6f}")
-      self.logger.info(f"Gradient Flow Healthy: {debug_info['gradient_flow_healthy']}")
-      self.logger.info(f"==========================================")
+      
+      if debug_info['gradients_meaningful']:
+          self.logger.info("✓ Gradients are meaningful (> 1e-8)")
+      else:
+          self.logger.warning("✗ Gradients are too small (< 1e-8) - this explains no updates!")
+          
+          if debug_info['feature_maps_adv_grad_norm'] < 1e-8:
+              self.logger.warning("  - Feature map gradients are too small")
+          if debug_info['patch_grad_norm'] < 1e-8:
+              self.logger.warning("  - Patch gradients are too small")
+      
+      self.logger.info("================================================")
       
       return debug_info
   
@@ -368,7 +415,7 @@ class PatchTrainerDebug():
               total_loss += loss.item()
               
               # Debug gradients before backward pass
-              debug_info = self.debug_gradients(loss, self.feature_maps_adv, self.feature_maps_rand, i_iter)
+              debug_info = self.debug_gradients_before_backward(loss, self.feature_maps_adv, self.feature_maps_rand, i_iter)
               
               #break
     
@@ -386,8 +433,7 @@ class PatchTrainerDebug():
               loss.backward()
               
               # Debug gradients after backward pass
-              if i_iter % self.log_per_iters == 0:
-                  self.logger.info(f"After backward pass - Patch grad norm: {torch.norm(self.adv_patch.grad).item() if self.adv_patch.grad is not None else 0.0:.6f}")
+              debug_info_after = self.debug_gradients_after_backward(loss, self.feature_maps_adv, self.feature_maps_rand, i_iter)
               
               with torch.no_grad():
                   # Check if gradients are meaningful

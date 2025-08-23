@@ -114,8 +114,8 @@ class PatchTrainerDebug():
 
       # Register hook
       if 'pidnet_s' in self.model_name:
-        self.layer_name = 'layer3.2.bn2' 
-        self.feature_map_shape = [128,64,64]
+        self.layer_name = 'layer4_.0.bn2' 
+        self.feature_map_shape = [64, 128, 256]
       elif 'pidnet_m' in self.model_name:
         self.layer_name = 'layer3.2.bn2' 
         self.feature_map_shape = [256,64,64]
@@ -471,7 +471,7 @@ class PatchTrainerDebug():
           
       # Generate gradient debug visualization at the end of each epoch
       if ep % 5 == 0:  # Every 5 epochs
-          self.visualize_gradients(save_path=f"gradient_debug_epoch_{ep}.png")
+          self.visualize_gradients(save_path=f"gradient_debug_Pbranch_epoch_{ep}.png")
 
       average_pixAcc, average_mIoU = self.metric.get()
       average_loss = total_loss/1000

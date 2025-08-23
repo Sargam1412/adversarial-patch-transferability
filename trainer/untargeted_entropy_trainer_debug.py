@@ -411,7 +411,7 @@ class PatchTrainerDebug():
                   continue
               
               # Compute adaptive loss
-              loss = self.criterion.compute_cos_warmup_loss(self.feature_maps_adv, self.feature_maps_rand, output1, patched_label_adv)
+              loss,cos_sim = self.criterion.compute_cos_warmup_loss(self.feature_maps_adv, self.feature_maps_rand, output1, patched_label_adv)
               total_loss += loss.item()
               
               # Debug gradients before backward pass

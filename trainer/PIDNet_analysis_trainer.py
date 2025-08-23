@@ -373,12 +373,12 @@ class PatchTrainer():
       # Check if we have valid branch analysis data
       if len(self.branch_losses['P']) > 0 and len(self.branch_gradients['P']) > 0:
           safety = self.adv_patch.clone().detach(), np.array(IoU), self.branch_losses, self.branch_gradients
-          pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_cos_loss_sidewalk_branch_analysis"+".p", "wb" ) )
+          pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_entropy_loss_sidewalk_ce_branch_analysis"+".p", "wb" ) )
           self.logger.info("Saved training data with branch analysis")
       else:
           # Fallback to saving without branch analysis
           safety = self.adv_patch.clone().detach(), np.array(IoU)
-          pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_cos_loss_sidewalk"+".p", "wb" ) )
+          pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_entropy_loss_sidewalk"+".p", "wb" ) )
           self.logger.warning("Branch analysis data not available, saved training data without branch analysis")
       
       #self.test() ## Doing 1 iteration of testing

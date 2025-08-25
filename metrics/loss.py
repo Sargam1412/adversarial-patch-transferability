@@ -224,8 +224,8 @@ class PatchLoss(nn.Module):
             # Use Python float for n to avoid tensor broadcasting issues
             n_float = float(n)
             
-            K_adv_centered = K_adv - (1.0/n_float) * ones @ K_adv - K_adv @ (1.0/n_float) * ones + (1.0/n_float**2) * ones @ K_adv @ ones
-            K_rand_centered = K_rand - (1.0/n_float) * ones @ K_rand - K_rand @ (1.0/n_float) * ones + (1.0/n_float**2) * K_rand @ ones
+            K_adv_centered = K_adv - ((1.0/n_float) * ones) @ K_adv - K_adv @ ((1.0/n_float) * ones) + ((1.0/n_float**2) * ones) @ K_adv @ ones
+            K_rand_centered = K_rand - ((1.0/n_float) * ones) @ K_rand - K_rand @ ((1.0/n_float) * ones) + ((1.0/n_float**2) * K_rand) @ ones
             
             # Compute HSIC: Tr(K_adv_centered @ K_rand_centered)
             hsic_batch = torch.trace(K_adv_centered @ K_rand_centered)
@@ -288,8 +288,8 @@ class PatchLoss(nn.Module):
             # Use Python float for n to avoid tensor broadcasting issues
             n_float = float(n)
             
-            K_adv_centered = K_adv - (1.0/n_float) * ones @ K_adv - K_adv @ (1.0/n_float) * ones + (1.0/n_float**2) * ones @ K_adv @ ones
-            K_rand_centered = K_rand - (1.0/n_float) * ones @ K_rand - K_rand @ (1.0/n_float) * ones + (1.0/n_float**2) * K_rand @ ones
+            K_adv_centered = K_adv - ((1.0/n_float) * ones) @ K_adv - K_adv @ ((1.0/n_float) * ones) + ((1.0/n_float**2) * ones) @ K_adv @ ones
+            K_rand_centered = K_rand - ((1.0/n_float) * ones) @ K_rand - K_rand @ ((1.0/n_float) * ones) + ((1.0/n_float**2) * K_rand) @ ones
             
             # Compute HSIC
             hsic_batch = torch.trace(K_adv_centered @ K_rand_centered)

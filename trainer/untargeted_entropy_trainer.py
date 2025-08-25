@@ -39,7 +39,7 @@ class PatchTrainer():
       self.apply_patch = Patch(config).apply_patch
       self.apply_patch_grad = Patch(config).apply_patch_grad
       self.apply_patch_rand = Patch(config).apply_patch_rand
-      self.epsilon = config.optimizer.init_lr
+      self.epsilon = 0.01
       self.coords=coords
     
       cityscape_train = Cityscapes(
@@ -216,7 +216,7 @@ class PatchTrainer():
                   # momentum = (0.9*momentum) + (grad/ (torch.norm(grad) + 1e-8))
                   # self.adv_patch += 0.01 * momentum / (momentum.norm() + 1e-8)
                   # self.logger.info(grad)
-                  self.adv_patch -= 0.01 * self.adv_patch.grad.data.sign()
+                  self.adv_patch -= self.epsilon * self.adv_patch.grad.data.sign()
                   # Compute gradient
                   # grad = self.adv_patch.grad.data
                   

@@ -439,7 +439,7 @@ class PatchTrainerDebug():
                   # Check if gradients are meaningful
                   if self.adv_patch.grad is not None and torch.norm(self.adv_patch.grad) > 1e-8:
                       old_patch_norm = torch.norm(self.adv_patch).item()
-                      self.adv_patch += 0.01 * self.adv_patch.grad.data.sign()
+                      self.adv_patch -= 0.01 * self.adv_patch.grad.data.sign()
                       new_patch_norm = torch.norm(self.adv_patch).item()
                       patch_update_magnitude = abs(new_patch_norm - old_patch_norm)
                       

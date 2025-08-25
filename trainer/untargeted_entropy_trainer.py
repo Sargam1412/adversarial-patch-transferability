@@ -126,8 +126,8 @@ class PatchTrainer():
 
       # Register hook
       if 'pidnet_s' in self.model_name:
-        self.layer_name = 'layer3.2.bn2' 
-        self.feature_map_shape = [128,64,64]
+        self.layer_name = 'layer4_.0.bn2' 
+        self.feature_map_shape = [64, 128, 256]
       elif 'pidnet_m' in self.model_name:
         self.layer_name = 'layer3.2.bn2' 
         self.feature_map_shape = [256,64,64]
@@ -177,7 +177,7 @@ class PatchTrainer():
       samplecnt = 0
       momentum = torch.zeros_like(self.adv_patch, device=self.device)
       for i_iter, batch in enumerate(self.train_dataloader, 0):
-        if i_iter<1000:
+        if i_iter<1:
           self.current_iteration += 1
           samplecnt += batch[0].shape[0]
           image, true_label,_, _, _, idx = batch
@@ -196,7 +196,7 @@ class PatchTrainer():
               output1 = self.model1.predict(patched_image_adv,patched_label_adv.shape)
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
-              loss = self.criterion.compute_entropy_loss(self.feature_maps_adv, self.feature_maps_rand)
+              loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)
               total_loss += loss.item()
               #break
     
@@ -216,7 +216,7 @@ class PatchTrainer():
                   # momentum = (0.9*momentum) + (grad/ (torch.norm(grad) + 1e-8))
                   # self.adv_patch += 0.01 * momentum / (momentum.norm() + 1e-8)
                   # self.logger.info(grad)
-                  self.adv_patch += 0.01 * self.adv_patch.grad.data.sign()
+                  self.adv_patch -= 0.01 * self.adv_patch.grad.data.sign()
                   # Compute gradient
                   # grad = self.adv_patch.grad.data
                   

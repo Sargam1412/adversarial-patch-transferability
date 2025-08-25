@@ -100,13 +100,24 @@ class PatchLoss(nn.Module):
         loss = 0.9*l2_norm + ce_loss
         return loss
 
-    def compute_loss_direct(self, model_output, label):
+    def compute_loss_direct(self, pred, target):
         """
         Compute the adaptive loss function
         """
-        ce_loss = nn.CrossEntropyLoss(ignore_index=self.config.train.ignore_label)  # Per-pixel loss
-        loss = ce_loss(model_output, label.long())  # Compute loss for all pixels
-        return -loss 
+        N, C, H, W = pred.shape
+        pred_softmax = F.softmax(pred, dim=1)
+        target_flat = target.view(-1)
+        pred_label = pred_softmax.argmax(dim=1)
+
+        # Flatten for per-pixel comparison
+        pred_label_flat = pred_label.view(-1)
+        correct_mask = (pred_label_flat == target_flat) & (target_flat != self.ignore_label)
+        loss = F.cross_entropy(pred, target.long(), ignore_index=self.ignore_label, reduction='none').view(-1)
+
+        # total_pixels = float(correct_mask.sum() + incorrect_mask.sum() + 1e-8)
+        loss_correct = loss[correct_mask]
+        loss_weighted = loss_correct.sum()/correct_mask.sum()
+        return -loss_weighted 
 
     def compute_cos_warmup_loss(self, adv_ft_map, rand_ft_map, pred, target):
         #Compute cosine similarity between adv and rand ft map
@@ -155,6 +166,11 @@ class PatchLoss(nn.Module):
             loss_cos = F.relu(cos_sim - 0.75)
             
             return loss_weighted, cos_sim # - 0.5*loss_cos
+
+    def compute_weighted_ce_loss(self, model_output, label):
+        ce_loss = nn.CrossEntropyLoss(ignore_index=self.config.train.ignore_label)  # Per-pixel loss
+        loss = ce_loss(model_output, label.long())  # Compute loss for all pixels
+        return -loss 
 
     def compute_entropy_loss(self, adv_ft_map, rand_ft_map):
         if adv_ft_map.dim() == 3:   # (C, H, W)

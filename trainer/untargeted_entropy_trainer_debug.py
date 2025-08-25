@@ -410,8 +410,8 @@ class PatchTrainerDebug():
                   self.logger.warning(f"Iteration {i_iter}: Feature maps not captured! Check if hook is working.")
                   continue
               
-              # Compute adaptive loss
-              loss,cos_sim = self.criterion.compute_cos_warmup_loss(self.feature_maps_adv, self.feature_maps_rand, output1, patched_label_adv)
+              # Compute HSIC loss treating spatial locations as samples (much better gradient flow than entropy loss)
+              loss = self.criterion.compute_hsic_loss_spatial(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0)
               total_loss += loss.item()
               
               # Debug gradients before backward pass
@@ -468,7 +468,7 @@ class PatchTrainerDebug():
                       eta_string))
         else:
           break
-          
+            
       # Generate gradient debug visualization at the end of each epoch
       if ep % 5 == 0:  # Every 5 epochs
           self.visualize_gradients(save_path=f"gradient_debug_Pbranch_epoch_{ep}.png")

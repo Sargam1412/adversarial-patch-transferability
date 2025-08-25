@@ -168,3 +168,125 @@ class PatchLoss(nn.Module):
         p = F.softmax(v1, dim=-1)
         loss = - (p * p.log()).sum(dim=-1).mean()
         return loss
+
+    def compute_hsic_loss_spatial(self, adv_ft_map, rand_ft_map, sigma=1.0):
+        """
+        Compute HSIC loss treating each spatial location as a sample and channels as features
+        
+        Args:
+            adv_ft_map: Adversarial feature maps (B, C, H, W) or (C, H, W)
+            rand_ft_map: Clean/random feature maps (B, C, H, W) or (C, H, W)
+            sigma: RBF kernel bandwidth parameter (default: 1.0)
+        
+        Returns:
+            HSIC loss value (higher = more independent, lower = more similar)
+        """
+        # Ensure 4D tensors
+        if adv_ft_map.dim() == 3:   # (C, H, W)
+            adv_ft_map = adv_ft_map.unsqueeze(0)  # (1, C, H, W)
+        if rand_ft_map.dim() == 3:  # (C, H, W)
+            rand_ft_map = rand_ft_map.unsqueeze(0)  # (1, C, H, W)
+        
+        B, C, H, W = adv_ft_map.shape
+        
+        # Reshape: (B, C, H, W) -> (B, H*W, C) 
+        # Each spatial location (H*W) becomes a sample, channels (C) become features
+        adv_spatial = adv_ft_map.permute(0, 2, 3, 1).reshape(B, H*W, C)  # (B, H*W, C)
+        rand_spatial = rand_ft_map.permute(0, 2, 3, 1).reshape(B, H*W, C)  # (B, H*W, C)
+        
+        # Normalize features for each spatial location
+        adv_spatial = F.normalize(adv_spatial, p=2, dim=2)  # Normalize along channel dimension
+        rand_spatial = F.normalize(rand_spatial, p=2, dim=2)  # Normalize along channel dimension
+        
+        # For each batch, compute HSIC between spatial samples
+        total_hsic = 0.0
+        for b in range(B):
+            # Get spatial samples for this batch: (H*W, C)
+            adv_samples = adv_spatial[b]  # (H*W, C)
+            rand_samples = rand_spatial[b]  # (H*W, C)
+            
+            # Compute RBF kernel matrices for spatial samples
+            # K_adv: kernel matrix between spatial locations in adversarial map
+            # K_rand: kernel matrix between spatial locations in random map
+            
+            # Compute pairwise distances between spatial locations
+            adv_dist = torch.cdist(adv_samples, adv_samples, p=2)  # (H*W, H*W)
+            rand_dist = torch.cdist(rand_samples, rand_samples, p=2)  # (H*W, H*W)
+            
+            # RBF kernel: K(x,y) = exp(-||x-y||^2 / (2*sigma^2))
+            K_adv = torch.exp(-adv_dist**2 / (2 * sigma**2))
+            K_rand = torch.exp(-rand_dist**2 / (2 * sigma**2))
+            
+            # Center the kernel matrices
+            n = H * W  # Number of spatial samples
+            ones = torch.ones(n, n, device=adv_ft_map.device)
+            
+            K_adv_centered = K_adv - (1/n) * ones @ K_adv - K_adv @ (1/n) * ones + (1/n**2) * ones @ K_adv @ ones
+            K_rand_centered = K_rand - (1/n) * ones @ K_rand - K_rand @ (1/n) * ones + (1/n**2) * K_rand @ ones
+            
+            # Compute HSIC: Tr(K_adv_centered @ K_rand_centered)
+            hsic_batch = torch.trace(K_adv_centered @ K_rand_centered)
+            total_hsic += hsic_batch
+        
+        # Return average HSIC across batches
+        return total_hsic / B
+
+    def compute_hsic_loss_spatial_efficient(self, adv_ft_map, rand_ft_map, sigma=1.0, max_samples=1000):
+        """
+        Efficient HSIC loss treating spatial locations as samples, with sampling for large feature maps
+        
+        Args:
+            adv_ft_map: Adversarial feature maps (B, C, H, W) or (C, H, W)
+            rand_ft_map: Clean/random feature maps (B, C, H, W) or (C, H, W)
+            sigma: RBF kernel bandwidth parameter (default: 1.0)
+            max_samples: Maximum number of spatial samples to use (default: 1000)
+        
+        Returns:
+            HSIC loss value
+        """
+        # Ensure 4D tensors
+        if adv_ft_map.dim() == 3:   # (C, H, W)
+            adv_ft_map = adv_ft_map.unsqueeze(0)  # (1, C, H, W)
+        if rand_ft_map.dim() == 3:  # (C, H, W)
+            rand_ft_map = rand_ft_map.unsqueeze(0)  # (1, C, H, W)
+        
+        B, C, H, W = adv_ft_map.shape
+        
+        # Reshape: (B, C, H, W) -> (B, H*W, C)
+        adv_spatial = adv_ft_map.permute(0, 2, 3, 1).reshape(B, H*W, C)
+        rand_spatial = rand_ft_map.permute(0, 2, 3, 1).reshape(B, H*W, C)
+        
+        # Normalize features
+        adv_spatial = F.normalize(adv_spatial, p=2, dim=2)
+        rand_spatial = F.normalize(rand_spatial, p=2, dim=2)
+        
+        total_hsic = 0.0
+        for b in range(B):
+            adv_samples = adv_spatial[b]  # (H*W, C)
+            rand_samples = rand_spatial[b]  # (H*W, C)
+            
+            # Random sampling if too many spatial locations
+            if adv_samples.shape[0] > max_samples:
+                indices = torch.randperm(adv_samples.shape[0])[:max_samples]
+                adv_samples = adv_samples[indices]
+                rand_samples = rand_samples[indices]
+            
+            # Compute RBF kernel matrices
+            adv_dist = torch.cdist(adv_samples, adv_samples, p=2)
+            rand_dist = torch.cdist(rand_samples, rand_samples, p=2)
+            
+            K_adv = torch.exp(-adv_dist**2 / (2 * sigma**2))
+            K_rand = torch.exp(-rand_dist**2 / (2 * sigma**2))
+            
+            # Center the kernel matrices
+            n = adv_samples.shape[0]
+            ones = torch.ones(n, n, device=adv_ft_map.device)
+            
+            K_adv_centered = K_adv - (1/n) * ones @ K_adv - K_adv @ (1/n) * ones + (1/n**2) * ones @ K_adv @ ones
+            K_rand_centered = K_rand - (1/n) * ones @ K_rand - K_rand @ (1/n) * ones + (1/n**2) * K_rand @ ones
+            
+            # Compute HSIC
+            hsic_batch = torch.trace(K_adv_centered @ K_rand_centered)
+            total_hsic += hsic_batch
+        
+        return total_hsic / B

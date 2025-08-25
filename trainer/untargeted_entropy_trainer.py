@@ -24,7 +24,7 @@ class PatchTrainer():
   def __init__(self,config,main_logger,model_name, coords, resume=False, patch=None):#,patch1,patch2,patch3,patch4
       self.config = config
       self.start_epoch = 0
-      self.end_epoch = 30
+      self.end_epoch = 100
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
       self.batch_test = config.test.batch_size
@@ -177,7 +177,7 @@ class PatchTrainer():
       samplecnt = 0
       momentum = torch.zeros_like(self.adv_patch, device=self.device)
       for i_iter, batch in enumerate(self.train_dataloader, 0):
-        if i_iter<1:
+        if i_iter==357:
           self.current_iteration += 1
           samplecnt += batch[0].shape[0]
           image, true_label,_, _, _, idx = batch
@@ -196,7 +196,10 @@ class PatchTrainer():
               output1 = self.model1.predict(patched_image_adv,patched_label_adv.shape)
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
-              loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)
+              if (ep<50):
+                loss = self.criterion.compute_loss_direct(output1, patched_label_adv)
+              else:
+                loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)
               total_loss += loss.item()
               #break
     
@@ -242,7 +245,7 @@ class PatchTrainer():
                       mIoU,
                       str(datetime.timedelta(seconds=int(time.time() - start_time))),
                       eta_string))
-        else:
+        elif i_iter>357:
           break
           
 
@@ -253,7 +256,7 @@ class PatchTrainer():
         self.current_epoch, self.epochs, average_loss, average_mIoU, average_pixAcc))
       IoU.append(self.metric.get(full=True))
       safety = self.adv_patch.clone().detach(), np.array(IoU)
-      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_hsic_loss_sidewalk_pbranch_sign"+".p", "wb" ) )
+      pickle.dump( safety, open(self.config.experiment.log_patch_address+self.config.model.name+"_2stage_hsic_loss_sidewalk_pbranch_sign"+".p", "wb" ) )
       
       #self.test() ## Doing 1 iteration of testing
       self.logger.info('-------------------------------------------------------------------------------------------------')

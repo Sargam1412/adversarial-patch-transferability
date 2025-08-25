@@ -177,7 +177,7 @@ class PatchTrainer():
       samplecnt = 0
       momentum = torch.zeros_like(self.adv_patch, device=self.device)
       for i_iter, batch in enumerate(self.train_dataloader, 0):
-        if i_iter==357:
+        if i_iter<1:
           self.current_iteration += 1
           samplecnt += batch[0].shape[0]
           image, true_label,_, _, _, idx = batch
@@ -245,12 +245,12 @@ class PatchTrainer():
                       mIoU,
                       str(datetime.timedelta(seconds=int(time.time() - start_time))),
                       eta_string))
-        elif i_iter>357:
+        else:
           break
           
 
       average_pixAcc, average_mIoU = self.metric.get()
-      average_loss = total_loss/1000
+      average_loss = total_loss
       self.logger.info('-------------------------------------------------------------------------------------------------')
       self.logger.info("Epochs: {:d}/{:d}, Average loss: {:.3f}, Average mIoU: {:.3f}, Average pixAcc: {:.3f}".format(
         self.current_epoch, self.epochs, average_loss, average_mIoU, average_pixAcc))

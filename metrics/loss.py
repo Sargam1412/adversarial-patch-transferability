@@ -221,8 +221,11 @@ class PatchLoss(nn.Module):
             n = H * W  # Number of spatial samples
             ones = torch.ones(n, n, device=adv_ft_map.device)
             
-            K_adv_centered = K_adv - (1/n) * ones @ K_adv - K_adv @ (1/n) * ones + (1/n**2) * ones @ K_adv @ ones
-            K_rand_centered = K_rand - (1/n) * ones @ K_rand - K_rand @ (1/n) * ones + (1/n**2) * K_rand @ ones
+            # Convert to tensor to avoid type mismatch
+            n_tensor = torch.tensor(n, dtype=torch.float32, device=adv_ft_map.device)
+            
+            K_adv_centered = K_adv - (1.0/n_tensor) * ones @ K_adv - K_adv @ (1.0/n_tensor) * ones + (1.0/n_tensor**2) * ones @ K_adv @ ones
+            K_rand_centered = K_rand - (1.0/n_tensor) * ones @ K_rand - K_rand @ (1.0/n_tensor) * ones + (1.0/n_tensor**2) * K_rand @ ones
             
             # Compute HSIC: Tr(K_adv_centered @ K_rand_centered)
             hsic_batch = torch.trace(K_adv_centered @ K_rand_centered)
@@ -282,8 +285,11 @@ class PatchLoss(nn.Module):
             n = adv_samples.shape[0]
             ones = torch.ones(n, n, device=adv_ft_map.device)
             
-            K_adv_centered = K_adv - (1/n) * ones @ K_adv - K_adv @ (1/n) * ones + (1/n**2) * ones @ K_adv @ ones
-            K_rand_centered = K_rand - (1/n) * ones @ K_rand - K_rand @ (1/n) * ones + (1/n**2) * K_rand @ ones
+            # Convert to tensor to avoid type mismatch
+            n_tensor = torch.tensor(n, dtype=torch.float32, device=adv_ft_map.device)
+            
+            K_adv_centered = K_adv - (1.0/n_tensor) * ones @ K_adv - K_adv @ (1.0/n_tensor) * ones + (1.0/n_tensor**2) * ones @ K_adv @ ones
+            K_rand_centered = K_rand - (1.0/n_tensor) * ones @ K_rand - K_rand @ (1.0/n_tensor) * ones + (1.0/n_tensor**2) * K_rand @ ones
             
             # Compute HSIC
             hsic_batch = torch.trace(K_adv_centered @ K_rand_centered)

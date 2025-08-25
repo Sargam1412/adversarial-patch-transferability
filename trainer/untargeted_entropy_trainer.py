@@ -39,7 +39,7 @@ class PatchTrainer():
       self.apply_patch = Patch(config).apply_patch
       self.apply_patch_grad = Patch(config).apply_patch_grad
       self.apply_patch_rand = Patch(config).apply_patch_rand
-      self.epsilon = 0.01
+      self.epsilon = 0.005
       self.coords=coords
     
       cityscape_train = Cityscapes(

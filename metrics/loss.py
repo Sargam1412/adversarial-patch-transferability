@@ -106,7 +106,7 @@ class PatchLoss(nn.Module):
         """
         ce_loss = nn.CrossEntropyLoss(ignore_index=self.config.train.ignore_label)  # Per-pixel loss
         loss = ce_loss(model_output, label.long())  # Compute loss for all pixels
-        return loss 
+        return -loss 
 
     def compute_cos_warmup_loss(self, adv_ft_map, rand_ft_map, pred, target):
         #Compute cosine similarity between adv and rand ft map

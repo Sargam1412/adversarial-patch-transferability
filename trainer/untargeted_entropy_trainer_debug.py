@@ -411,7 +411,7 @@ class PatchTrainerDebug():
                   continue
               
               # Compute HSIC loss treating spatial locations as samples (much better gradient flow than entropy loss)
-              loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=16000)
+              loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)
               total_loss += loss.item()
               
               # Debug gradients before backward pass

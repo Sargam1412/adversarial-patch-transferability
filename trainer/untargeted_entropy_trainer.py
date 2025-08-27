@@ -143,6 +143,7 @@ class PatchTrainer():
 
       self.feature_maps_adv = None
       self.feature_maps_rand = None
+      self.patch_ce_ref = None
     
   # Hook to store feature map
   def hook1(self, module, input, output):
@@ -197,9 +198,11 @@ class PatchTrainer():
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
               if (ep<2950):
-                loss = self.criterion.compute_loss_direct(output1, patched_label_adv)
+                loss = self.criterion.compute_loss_direct(output1, patched_label_adv, t=ep+1, T=2950)
               else:
-                loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)
+                hsic_loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)
+                cos_loss = self.criterion.compute_cos_loss(self.adv_patch, self.patch_ce_ref)
+                loss = hsic_loss + 0.1*cos_loss
               total_loss += loss.item()
               #break
     
@@ -229,7 +232,10 @@ class PatchTrainer():
                   # Update in the normalized gradient direction
                   # self.adv_patch += 0.01 * (grad / (torch.norm(grad) + 1e-8))
                   self.adv_patch.clamp_(-2.1, 2.6)  # Keep pixel values in valid range
-    
+                  
+              if ep == 2949:  
+                self.patch_ce_ref = self.adv_patch.clone().detach()  # save reference
+
               ## ETA
               eta_seconds = ((time.time() - start_time) / self.epochs) * (self.epochs - ep)
               eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))

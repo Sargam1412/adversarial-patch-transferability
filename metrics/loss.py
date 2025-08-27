@@ -100,7 +100,7 @@ class PatchLoss(nn.Module):
         loss = 0.9*l2_norm + ce_loss
         return loss
 
-    def compute_loss_direct(self, pred, target):
+    def compute_loss_direct(self, pred, target, t=1, T=1000):
         """
         Compute the adaptive loss function
         """
@@ -112,13 +112,31 @@ class PatchLoss(nn.Module):
         # Flatten for per-pixel comparison
         pred_label_flat = pred_label.view(-1)
         correct_mask = (pred_label_flat == target_flat) & (target_flat != self.ignore_label)
+        incorrect_mask = (pred_label_flat != target_flat) & (target_flat != self.ignore_label)
         loss = F.cross_entropy(pred, target.long(), ignore_index=self.ignore_label, reduction='none').view(-1)
 
-        # total_pixels = float(correct_mask.sum() + incorrect_mask.sum() + 1e-8)
+        total_pixels = float(correct_mask.sum() + incorrect_mask.sum())
+        lamda=(t-1)/T
         loss_correct = loss[correct_mask]
-        loss_weighted = loss_correct.sum()/correct_mask.sum()
+        loss_incorrect = loss[incorrect_mask]
+        loss_weighted = ((1-lamda)*loss_correct.sum() + lamda*loss_incorrect.sum())/total_pixels
         return -loss_weighted 
 
+    def compute_cos_loss(self, patch_current, patch_ref):
+        """
+        Cosine distance between current patch and reference patch.
+        Returns a positive penalty if patches diverge.
+        """
+        v1 = patch_current.view(-1)
+        v2 = patch_ref.view(-1)
+
+        v1 = v1 / (v1.norm() + 1e-8)
+        v2 = v2 / (v2.norm() + 1e-8)
+
+        cos_sim = torch.dot(v1, v2)
+        # Loss = 1 - cos_sim (want cos_sim close to 1)
+        return 1.0 - cos_sim
+    
     def compute_cos_warmup_loss(self, adv_ft_map, rand_ft_map, pred, target):
         #Compute cosine similarity between adv and rand ft map
         # Flatten to vectors

@@ -197,7 +197,7 @@ class PatchTrainer():
               output1 = self.model1.predict(patched_image_adv,patched_label_adv.shape)
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
-              if (ep<2950):
+              if (ep<self.end_epoch-50):
                 loss = self.criterion.compute_loss_direct(output1, patched_label_adv, t=ep+1, T=self.end_epoch-50)
               else:
                 hsic_loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)

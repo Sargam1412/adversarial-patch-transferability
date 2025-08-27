@@ -24,7 +24,7 @@ class PatchTrainer():
   def __init__(self,config,main_logger,model_name, coords, resume=False, patch=None):#,patch1,patch2,patch3,patch4
       self.config = config
       self.start_epoch = 0
-      self.end_epoch = 3000
+      self.end_epoch = 1000
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
       self.batch_test = config.test.batch_size
@@ -198,7 +198,7 @@ class PatchTrainer():
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
               if (ep<2950):
-                loss = self.criterion.compute_loss_direct(output1, patched_label_adv, t=ep+1, T=2950)
+                loss = self.criterion.compute_loss_direct(output1, patched_label_adv, t=ep+1, T=self.end_epoch-50)
               else:
                 hsic_loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)
                 cos_loss = self.criterion.compute_cos_loss(self.adv_patch, self.patch_ce_ref)
@@ -232,8 +232,8 @@ class PatchTrainer():
                   # Update in the normalized gradient direction
                   # self.adv_patch += 0.01 * (grad / (torch.norm(grad) + 1e-8))
                   self.adv_patch.clamp_(-2.1, 2.6)  # Keep pixel values in valid range
-                  
-              if ep == 2949:  
+
+              if ep == self.end_epoch-51:  
                 self.patch_ce_ref = self.adv_patch.clone().detach()  # save reference
 
               ## ETA

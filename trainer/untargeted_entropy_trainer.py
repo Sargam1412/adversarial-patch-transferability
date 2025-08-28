@@ -24,7 +24,7 @@ class PatchTrainer():
   def __init__(self,config,main_logger,model_name, coords, resume=False, patch=None):#,patch1,patch2,patch3,patch4
       self.config = config
       self.start_epoch = 0
-      self.end_epoch = 1000
+      self.end_epoch = 3000
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
       self.batch_test = config.test.batch_size
@@ -202,7 +202,7 @@ class PatchTrainer():
               else:
                 hsic_loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)
                 cos_loss = self.criterion.compute_cos_loss(self.adv_patch, self.patch_ce_ref)
-                loss = hsic_loss + 0.1*cos_loss
+                loss = hsic_loss + 0.2*cos_loss
               total_loss += loss.item()
               #break
     
@@ -244,7 +244,7 @@ class PatchTrainer():
                 self.logger.info(
                   "Epochs: {:d}/{:d} || Samples: {:d}/{:d} || Lr: {:.6f} || Loss: {:.4f} || mIoU: {:.4f} || Cost Time: {} || Estimated Time: {}".format(
                       self.current_epoch, self.end_epoch,
-                      samplecnt, 1000,
+                      samplecnt, 1,
                       #self.optimizer.param_groups[0]['lr'],
                       self.epsilon,
                       loss.item(),

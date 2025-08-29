@@ -100,6 +100,24 @@ class PatchLoss(nn.Module):
         loss = 0.9*l2_norm + ce_loss
         return loss
 
+    def compute_ce_loss(self, pred, target):
+        """
+        Compute the adaptive loss function
+        """
+        N, C, H, W = pred.shape
+        pred_softmax = F.softmax(pred, dim=1)
+        target_flat = target.view(-1)
+        pred_label = pred_softmax.argmax(dim=1)
+
+        # Flatten for per-pixel comparison
+        pred_label_flat = pred_label.view(-1)
+        correct_mask = (pred_label_flat == target_flat) & (target_flat != self.ignore_label)
+        loss = F.cross_entropy(pred, target.long(), ignore_index=self.ignore_label, reduction='none').view(-1)
+
+        loss_correct = loss[correct_mask]
+        loss_weighted = loss_correct.sum()/correct_mask.sum()
+        return -loss_weighted 
+
     def compute_loss_direct(self, pred, target, t=1, T=1000):
         """
         Compute the adaptive loss function
@@ -330,3 +348,6 @@ class PatchLoss(nn.Module):
             total_hsic += hsic_batch
         
         return total_hsic / B
+
+    def compute_D_loss(self, adv_ft_map):
+        return adv_ft_map.sum()

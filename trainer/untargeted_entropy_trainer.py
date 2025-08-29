@@ -24,7 +24,7 @@ class PatchTrainer():
   def __init__(self,config,main_logger,model_name, coords, resume=False, patch=None):#,patch1,patch2,patch3,patch4
       self.config = config
       self.start_epoch = 0
-      self.end_epoch = 6000
+      self.end_epoch = 3000
       self.epochs = self.end_epoch - self.start_epoch
       self.batch_train = config.train.batch_size
       self.batch_test = config.test.batch_size
@@ -126,8 +126,10 @@ class PatchTrainer():
 
       # Register hook
       if 'pidnet_s' in self.model_name:
-        self.layer_name = 'layer4_.0.bn2' 
-        self.feature_map_shape = [64, 128, 256]
+        self.layer1_name = 'layer5.1.relu' 
+        self.feature_map1_shape = [256,16,32]
+        self.layer2_name = 'layer5_d.0.downsample.1' 
+        self.feature_map2_shape = [128, 128, 256]
       elif 'pidnet_m' in self.model_name:
         self.layer_name = 'layer3.2.bn2' 
         self.feature_map_shape = [256,64,64]
@@ -141,33 +143,55 @@ class PatchTrainer():
         self.layer_name = 'pretrained.layer2.3.relu'
         self.feature_map_shape=[512,32,32]
 
-      self.feature_maps_adv = None
-      self.feature_maps_rand = None
+      self.feature_maps1_adv = None
+      self.feature_maps1_rand = None
+      self.feature_maps2_adv = None
+      self.feature_maps2_rand = None
       self.patch_ce_ref = None
     
   # Hook to store feature map
-  def hook1(self, module, input, output):
-      self.feature_maps_adv = output
+  def hook11(self, module, input, output):
+      self.feature_maps1_adv = output
       output.retain_grad()
 
-  def hook2(self, module, input, output):
-      self.feature_maps_rand = output
+  def hook12(self, module, input, output):
+      self.feature_maps2_adv = output
       output.retain_grad()
 
-  def register_forward_hook1(self):
+  def hook21(self, module, input, output):
+      self.feature_maps1_rand = output
+      output.retain_grad()
+
+  def hook22(self, module, input, output):
+      self.feature_maps2_rand = output
+      output.retain_grad()
+
+  def register_forward_hook11(self):
     for name, module in self.model1.model.named_modules():
-        if name == self.layer_name:
-          module.register_forward_hook(self.hook1)
+        if name == self.layer1_name:
+          module.register_forward_hook(self.hook11)
 
-  def register_forward_hook2(self):
+  def register_forward_hook12(self):
+    for name, module in self.model1.model.named_modules():
+        if name == self.layer2_name:
+          module.register_forward_hook(self.hook12)
+
+  def register_forward_hook21(self):
     for name, module in self.model2.model.named_modules():
-        if name == self.layer_name:
-          module.register_forward_hook(self.hook2)
+        if name == self.layer1_name:
+          module.register_forward_hook(self.hook21)
+
+  def register_forward_hook22(self):
+    for name, module in self.model2.model.named_modules():
+        if name == self.layer2_name:
+          module.register_forward_hook(self.hook22)
   
   def train(self):
     epochs, iters_per_epoch, max_iters = self.epochs, self.iters_per_epoch, self.max_iters
-    self.feature_maps_adv = None
-    self.feature_maps_rand = None
+    self.feature_maps1_adv = None
+    self.feature_maps1_rand = None
+    self.feature_maps2_adv = None
+    self.feature_maps2_rand = None
     start_time = time.time()
     self.logger.info('Start training, Total Epochs: {:d} = Iterations per epoch {:d}'.format(epochs, 1000))
     IoU = []
@@ -198,11 +222,14 @@ class PatchTrainer():
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
               if (ep<self.end_epoch-50):
-                loss = self.criterion.compute_loss_direct(output1, patched_label_adv, t=ep+1, T=self.end_epoch-50)
+                loss = self.criterion.compute_ce_loss(output1, patched_label_adv, t=ep+1, T=self.end_epoch-50)
               else:
-                hsic_loss = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps_adv, self.feature_maps_rand, sigma=1.0, max_samples=10000)
+                if(ep%5==0):
+                  loss1=self.criterion.compute_D_loss(self.feature_maps2_adv)
+                else:
+                  loss1 = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps1_adv, self.feature_maps1_rand, sigma=1.0, max_samples=10000)
                 cos_loss = self.criterion.compute_cos_loss(self.adv_patch, self.patch_ce_ref)
-                loss = hsic_loss + 0.2*cos_loss
+                loss = loss1 + 0.2*cos_loss
               total_loss += loss.item()
               #break
     

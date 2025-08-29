@@ -222,7 +222,7 @@ class PatchTrainer():
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
               if (ep<self.end_epoch-50):
-                loss = self.criterion.compute_ce_loss(output1, patched_label_adv, t=ep+1, T=self.end_epoch-50)
+                loss = self.criterion.compute_ce_loss(output1, patched_label_adv)
               else:
                 if(ep%5==0):
                   loss1=self.criterion.compute_D_loss(self.feature_maps2_adv)

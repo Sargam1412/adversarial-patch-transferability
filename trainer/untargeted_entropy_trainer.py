@@ -227,7 +227,7 @@ class PatchTrainer():
                 if(ep%5==0):
                   loss1=self.criterion.compute_D_loss(self.feature_maps2_adv)
                 else:
-                  loss1 = self.criterion.compute_hsic_loss_spatial_efficient(self.feature_maps1_adv, self.feature_maps1_rand, sigma=1.0, max_samples=10000)
+                  loss1 = self.criterion.compute_hsic_loss_spatial(self.feature_maps1_adv, self.feature_maps1_rand, sigma=1.0)
                 cos_loss = self.criterion.compute_cos_loss(self.adv_patch, self.patch_ce_ref)
                 loss = loss1 + 0.2*cos_loss
               total_loss += loss.item()

@@ -221,7 +221,7 @@ class PatchTrainer():
               output1 = self.model1.predict(patched_image_adv,patched_label_adv.shape)
               output2 = self.model2.predict(patched_image_rand,patched_label_rand.shape)
               # Compute adaptive loss
-              if (ep<self.end_epoch-100):
+              if (ep<self.end_epoch-50):
                 loss = self.criterion.compute_ce_loss(output1, patched_label_adv)
               else:
                 if(ep%5==0):
@@ -260,7 +260,7 @@ class PatchTrainer():
                   # self.adv_patch += 0.01 * (grad / (torch.norm(grad) + 1e-8))
                   self.adv_patch.clamp_(-2.1, 2.6)  # Keep pixel values in valid range
 
-              if ep == self.end_epoch-101:  
+              if ep == self.end_epoch-51:  
                 self.patch_ce_ref = self.adv_patch.clone().detach()  # save reference
 
               ## ETA

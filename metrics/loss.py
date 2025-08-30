@@ -350,4 +350,5 @@ class PatchLoss(nn.Module):
         return total_hsic / B
 
     def compute_D_loss(self, adv_ft_map):
-        return adv_ft_map.sum()
+        boundary_prob=torch.sigmoid(adv_ft_map)
+        return boundary_prob.sum()

@@ -5,6 +5,8 @@ from pretrained_models.ICNet.icnet import ICNet
 from pretrained_models.BisNetV1.model import BiSeNetV1
 from pretrained_models.BisNetV2.model import BiSeNetV2
 from pretrained_models.PIDNet.model import PIDNet, get_pred_model
+from pretrained_models.PSPNet.pspnet import PSPNet
+from pretrained_models.Deeplab.deeplabv3 import DeepLabV3
 from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
 import torch.nn.functional as F
 
@@ -63,6 +65,43 @@ class Models():
       self.model = segformer
       self.model.eval()
 
+    if 'pspnet' in self.config.model.name:
+      # Load pretrained PSPNet weights
+      if '101' in self.config.model.name:
+          pspnet = PSPNet(layers=101).to(self.device)
+
+          # Load Cityscapes pretrained PSPNet weights
+          state_dict = torch.load(
+              '/kaggle/working/adversarial-patch-transferability/pretrained_models/PSPNet/pspnet101_cityscapes.pth',
+              map_location=self.device
+          )
+          pspnet.load_state_dict(state_dict, strict=False)
+
+      elif '50' in self.config.model.name:
+          pspnet = PSPNet(layers=50).to(self.device)
+
+          state_dict = torch.load(
+              '/kaggle/working/adversarial-patch-transferability/pretrained_models/PSPNet/pspnet50_cityscapes.pth',
+              map_location=self.device
+          )
+          pspnet.load_state_dict(state_dict, strict=False)
+
+      self.model = pspnet
+      self.model.eval()
+
+    if 'deeplab' in self.config.model.name:
+      if '50' in self.config.model.name:
+          deeplab = DeepLabV3(model_id="deeplabv3_resnet50", 
+                              project_dir="/kaggle/working/").to(self.device)
+
+          # Load pretrained weights (Cityscapes)
+          state_dict = torch.load(
+              '/kaggle/working/adversarial-patch-transferability/pretrained_models/DeepLabV3/deeplabv3_cityscapes.pth',
+              map_location=self.device
+          )
+          deeplab.load_state_dict(state_dict, strict=False)
+
+
 
   def predict(self,image_standard,size):
     image_standard = image_standard.to(self.device)
@@ -88,7 +127,16 @@ class Models():
       ## The it will give 75% miou instead of 71 and to keep things simple keeping it as it
       output = outputs[self.config.test.output_index_bisenet]
 
+    if 'pspnet' in self.config.model.name:
+      output = outputs  # already logits
+      output = F.interpolate(output, size[-2:], mode='bilinear', align_corners=True)
+
+    if 'deeplab' in self.config.model.name:
+      output = outputs  # already logits
+      output = F.interpolate(output, size[-2:], mode='bilinear', align_corners=True)
+
     return output
+
 
     
 

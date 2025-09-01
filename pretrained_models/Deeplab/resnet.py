@@ -99,7 +99,7 @@ class ResNet_Bottleneck_OS16(nn.Module):
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             state_dict = torch.load(
                 '/kaggle/working/adversarial-patch-transferability/pretrained_models/Deeplab/resnet50-deeplab.pth',
-                map_location=device
+                map_location=device, weights_only=False
             )
             resnet.load_state_dict(state_dict, strict=False)
             # remove fully connected layer, avg pool and layer5:

@@ -9,6 +9,7 @@ from pretrained_models.PSPNet.pspnet import PSPNet
 from pretrained_models.Deeplab.deeplabv3 import DeepLabV3
 from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
 import torch.nn.functional as F
+import torch.nn as nn
 
 class Models():
   def __init__(self,config):
@@ -100,6 +101,29 @@ class Models():
               map_location=self.device
           )
           deeplab.load_state_dict(state_dict, strict=False)
+          # ---- Drop the 20th neuron ----
+          old_cls = deeplab.aspp.conv_1x1_4  # final classifier Conv2d(256 -> 20)
+          new_cls = nn.Conv2d(
+              old_cls.in_channels, 
+              19, 
+              kernel_size=old_cls.kernel_size, 
+              stride=old_cls.stride, 
+              padding=old_cls.padding, 
+              bias=True
+          ).to(self.device)
+
+          # Copy weights for first 19 classes
+          with torch.no_grad():
+              new_cls.weight.copy_(old_cls.weight[:19, :, :, :])
+              if old_cls.bias is not None:
+                  new_cls.bias.copy_(old_cls.bias[:19])
+
+          # Replace final layer in ASPP
+          deeplab.aspp.conv_1x1_4 = new_cls
+
+
+      self.model = deeplab
+      self.model.eval()
 
 
 
